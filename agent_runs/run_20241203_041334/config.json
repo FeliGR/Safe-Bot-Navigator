@@ -1,8 +1,0 @@
-{
-    "agent_file": "trained_agents\\basic_qlearning_s5_r1\\agent.npy",
-    "grid_size": 5,
-    "obstacle_prob": 0.2,
-    "episodes": 3,
-    "delay": 0.3,
-    "render": true
-}
