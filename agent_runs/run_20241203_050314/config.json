@@ -1,0 +1,15 @@
+{
+    "agent_file": "trained_agents\\BasicQLearningAgent_s5_r1\\agent.npy",
+    "episodes": 3,
+    "delay": 0.3,
+    "env_config": {
+        "size": 5,
+        "obstacle_prob": 0.2,
+        "rewards": {
+            "target": 1,
+            "empty": 0,
+            "collision": 0
+        }
+    },
+    "timestamp": "20241203_050314"
+}

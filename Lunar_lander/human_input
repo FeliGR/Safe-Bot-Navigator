@@ -1,0 +1,74 @@
+import gymnasium as gym
+from pynput import keyboard
+import time
+
+# Global variables for key states
+key_states = {
+    'w': False,  # Main engine
+    'a': False,  # Left engine
+    'd': False,  # Right engine
+}
+
+def on_press(key):
+    try:
+        k = key.char.lower()
+        if k in key_states:
+            key_states[k] = True
+    except AttributeError:
+        pass
+
+def on_release(key):
+    try:
+        k = key.char.lower()
+        if k in key_states:
+            key_states[k] = False
+    except AttributeError:
+        if key == keyboard.Key.esc:
+            return False
+
+def get_action():
+    if key_states['w']:  # Main engine
+        return 2
+    elif key_states['a']:  # Left engine
+        return 1
+    elif key_states['d']:  # Right engine
+        return 3
+    return 0  # Do nothing
+
+# Create environment
+env = gym.make("LunarLander-v2", render_mode="human")
+observation, info = env.reset()
+
+# Setup keyboard listener
+listener = keyboard.Listener(
+    on_press=on_press,
+    on_release=on_release)
+listener.start()
+
+print("Controls:")
+print("W - Main engine (up)")
+print("A - Left engine")
+print("D - Right engine")
+print("S - Do nothing")
+print("ESC - Quit")
+
+total_reward = 0
+# Game loop
+try:
+    while True:
+        action = get_action()
+        observation, reward, terminated, truncated, info = env.step(action)
+        total_reward += reward
+        
+        if terminated or truncated:
+            print(f"Episode finished! Total reward: {total_reward}")
+            total_reward = 0
+            observation, info = env.reset()
+        
+        time.sleep(0.05)  # Add small delay to make it playable
+        
+except KeyboardInterrupt:
+    pass
+
+env.close()
+listener.stop()

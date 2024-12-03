@@ -1,0 +1,6 @@
+gymnasium
+gymnasium[atari,classic_control,toy_text,box2d]
+pandas
+matplotlib
+pillow
+joblib
