@@ -1,0 +1,1 @@
+{"agent_module": "agents.basic_qlearning", "agent_class": "BasicQLearningAgent", "learning_rate": 0.1, "gamma": 0.99, "epsilon": 1.0, "epsilon_min": 0.01, "epsilon_decay": 9.9e-05}
