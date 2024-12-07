@@ -17,14 +17,17 @@ train_config = {
 }
 
 agent_config = {
-    "agent_module": "agents.q_learning_teacher",
+    "agent_module": "agents.q_learning_Clouse_AFH",
     "agent_class": "QLearningAgentTeacher",
     "learning_rate": 0.1,
     "gamma": 0.99,
-    "epsilon": 0,
+    "epsilon": 1,
     "epsilon_min": 0,
     "planified_episodes": 0,
     "q_threshold": 0.2,  # Threshold for deciding between planifier and RL actions
+    "interaction_type": "stochastic",  # "uniform" or "stochastic"
+    "planner_probability": 0.2,
+    "teacher_expertise": 0.8,  # Probability of teacher trying trap-free path first
 }
 
 agent_config["epsilon_decay"] = (

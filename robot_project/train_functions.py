@@ -30,7 +30,7 @@ def create_scenario(env_config, agent_config, train_config):
     agent = AgentClass(env.size**2, len(env.ACTIONS), **agent_params)
     agent.train(env, **train_config)
 
-    save_path = "robot_project/trained_agents"
+    save_path = "trained_agents"
     folder_name = f"{agent.__class__.__name__}_size_{env.size}_obstacle_prob_{env.obstacle_prob}_trap_prob_{env.trap_prob}_trap_danger_{env.trap_danger}_{time.strftime('%Y%m%d_%H%M%S')}"
     full_path = os.path.join(save_path, folder_name)
     os.makedirs(full_path, exist_ok=True)
@@ -56,7 +56,7 @@ def create_scenario(env_config, agent_config, train_config):
 def retrain_agent(agent, env, train_config):
     agent.train(env, **train_config)
 
-    save_path = "robot_project/trained_agents"
+    save_path = "trained_agents"
     folder_name = f"{agent.__class__.__name__}_size_{env.size}_obstacle_prob_{env.obstacle_prob}_trap_prob_{env.trap_prob}_trap_danger_{env.trap_danger}_{time.strftime('%Y%m%d_%H%M%S')}"
     full_path = os.path.join(save_path, folder_name)
     os.makedirs(full_path, exist_ok=True)
