@@ -189,7 +189,7 @@ class BasicQLearningAgent:
         self.greedy_history = history
 
     def plot_history(self, history_type=BOTH_HISTORIES, save_path=None):
-        """Plot agent histories.
+        """Plot agent histories in a grid layout.
 
         Args:
             history_type: Which history to plot (TRAIN_HISTORY, GREEDY_HISTORY, or BOTH_HISTORIES)
@@ -216,11 +216,17 @@ class BasicQLearningAgent:
             print("No history available to plot")
             return
 
+        # Calculate total number of metrics to plot
         n_metrics = sum(
             len([k for k in h[1].keys() if k != "episodes"]) for h in histories
         )
 
-        plt.figure(figsize=(12, 4 * n_metrics))
+        # Calculate grid dimensions
+        n_cols = min(2, n_metrics)  # Maximum 2 columns
+        n_rows = (n_metrics + n_cols - 1) // n_cols  # Ceiling division
+
+        # Create figure with appropriate size
+        plt.figure(figsize=(8 * n_cols, 5 * n_rows))
 
         plot_idx = 1
 
@@ -229,7 +235,7 @@ class BasicQLearningAgent:
             episodes = history["episodes"]
 
             for metric in metrics:
-                plt.subplot(n_metrics, 1, plot_idx)
+                plt.subplot(n_rows, n_cols, plot_idx)
                 plt.plot(episodes, history[metric], label=f"{title} {metric}")
                 plt.title(f'{title} {metric.replace("_", " ").title()}')
                 plt.xlabel("Episodes")
@@ -237,9 +243,9 @@ class BasicQLearningAgent:
                 plt.grid(True)
                 plt.legend()
 
-                plt.subplots_adjust(hspace=0.4)
-
                 plot_idx += 1
+
+        plt.tight_layout()  # Adjust spacing between subplots
 
         if save_path:
             plt.savefig(save_path, bbox_inches="tight")
