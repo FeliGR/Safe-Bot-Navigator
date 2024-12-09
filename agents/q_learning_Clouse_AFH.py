@@ -12,37 +12,22 @@ class QLearningAgentTeacher(BasicQLearningAgent):
     and a teaching agent (planner). The interaction between the agent and the teacher can be
     configured in different ways.
 
-    Parameters
-    ----------
-    state_size : int
-        Size of the state space
-    n_actions : int
-        Number of possible actions
-    learning_rate : float, optional (default=0.1)
-        Learning rate for Q-value updates (α in Q-learning equation)
-    gamma : float, optional (default=0.95)
-        Discount factor for future rewards (γ in Q-learning equation)
-    epsilon : float, optional (default=1.0)
-        Initial exploration rate for epsilon-greedy policy
-    epsilon_min : float, optional (default=0.01)
-        Minimum exploration rate
-    epsilon_decay : float, optional (default=0.001)
-        Decay rate for epsilon after each episode
-    planified_episodes : int, optional (default=20)
-        Number of episodes where the agent learns from teacher demonstrations
-    q_threshold : float, optional (default=0.2)
-        Threshold for Q-value difference to decide when to ask for help in stochastic mode
-    interaction_type : str, optional (default='uniform')
-        Type of interaction between agent and teacher. Options:
-        - 'uniform': Uses teacher's action with fixed probability
-        - 'stochastic': Uses teacher based on Q-value uncertainty
-    planner_probability : float, optional (default=0.5)
-        Probability of using teacher's action in uniform interaction mode
-    teacher_expertise : float, optional (default=0.8)
-        Probability that the teacher will attempt to find a path without traps first
+    Attributes:
+        state_size (int): Size of the state space.
+        n_actions (int): Number of possible actions.
+        learning_rate (float): Learning rate for Q-value updates (α in Q-learning).
+        gamma (float): Discount factor for future rewards (γ in Q-learning).
+        epsilon (float): Exploration rate for epsilon-greedy policy.
+        epsilon_min (float): Minimum exploration rate.
+        epsilon_decay (float): Decay rate for epsilon after each episode.
+        planified_episodes (int): Number of episodes for teacher demonstrations.
+        q_threshold (float): Threshold for Q-value difference in stochastic interaction.
+        interaction_type (str): Type of interaction between agent and teacher ('uniform' or 'stochastic').
+        planner_probability (float): Probability of using teacher's action in uniform interaction mode.
+        teacher_expertise (float): Probability that the teacher will attempt to find a path without traps first.
+        planifier (PlanifiedAgent): The planning agent used for demonstrations.
     """
 
-    # Interaction type constants
     UNIFORM = "uniform"
     STOCHASTIC = "stochastic"
 
@@ -61,6 +46,23 @@ class QLearningAgentTeacher(BasicQLearningAgent):
         planner_probability=0.5,
         teacher_expertise=0.8,
     ):
+        """
+        Initialize the QLearningAgentTeacher with given parameters.
+
+        Args:
+            state_size (int): Size of the state space.
+            n_actions (int): Number of possible actions.
+            learning_rate (float, optional): Learning rate for Q-value updates.
+            gamma (float, optional): Discount factor for future rewards.
+            epsilon (float, optional): Initial exploration rate.
+            epsilon_min (float, optional): Minimum exploration rate.
+            epsilon_decay (float, optional): Decay rate for the exploration rate.
+            planified_episodes (int, optional): Number of episodes for teacher demonstrations.
+            q_threshold (float, optional): Threshold for Q-value difference to ask for help.
+            interaction_type (str, optional): Type of interaction ('uniform' or 'stochastic').
+            planner_probability (float, optional): Probability of using teacher's action in uniform interaction.
+            teacher_expertise (float, optional): Probability that the teacher prefers paths without traps.
+        """
         super().__init__(
             state_size,
             n_actions,
@@ -86,7 +88,17 @@ class QLearningAgentTeacher(BasicQLearningAgent):
         render_mode=None,
         render_delay=0.1,
     ):
-        """Train with planified demonstrations followed by autonomous learning"""
+        """
+        Train the agent using a combination of teacher demonstrations and autonomous learning.
+
+        Args:
+            env: The environment to train the agent in.
+            episodes (int, optional): Total number of training episodes.
+            max_steps (int, optional): Maximum steps per episode.
+            render_freq (int, optional): Frequency to render the environment.
+            render_mode (str, optional): Mode to render ('human' or None).
+            render_delay (float, optional): Delay between renders in seconds.
+        """
         print(
             f"\nStarting {self.planified_episodes} planified demonstration episodes..."
         )
@@ -99,7 +111,6 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             "episodes": list(range(episodes)),
         }
 
-        # Planified demonstration phase
         for episode in range(self.planified_episodes):
             state = env.reset()
             total_reward = 0
@@ -108,7 +119,6 @@ class QLearningAgentTeacher(BasicQLearningAgent):
 
             print(f"\nPlanified Episode {episode + 1}/{self.planified_episodes}")
 
-            # Get the planned path for this episode
             planned_actions = env.find_shortest_path(allow_traps=False)
             if planned_actions is None:
                 planned_actions = env.find_shortest_path(allow_traps=True)
@@ -122,18 +132,15 @@ class QLearningAgentTeacher(BasicQLearningAgent):
                     env.render(mode=render_mode)
                     time.sleep(render_delay)
 
-                # Get action from the planned path
                 action = planned_actions[steps]
                 next_state, reward, done = env.step(action)
 
-                # Update Q-table with the planified action
                 self.update(state, action, reward, next_state)
 
                 state = next_state
                 total_reward += reward
                 steps += 1
 
-            # Track metrics
             history["rewards"].append(total_reward)
             history["epsilon"].append(self.epsilon)
             history["max_q"].append(np.max(self.q_table))
@@ -141,7 +148,6 @@ class QLearningAgentTeacher(BasicQLearningAgent):
 
             print(f"Episode completed - Steps: {steps}, Reward: {total_reward:.2f}")
 
-        # Autonomous learning phase
         print("\nStarting autonomous learning phase...")
         for episode in range(self.planified_episodes, episodes):
             state = env.reset()
@@ -182,45 +188,48 @@ class QLearningAgentTeacher(BasicQLearningAgent):
         self.train_history = history
 
     def get_random_action(self):
+        """
+        Get a random action.
+
+        Returns:
+            int: A randomly selected action.
+        """
         return np.random.randint(0, self.n_actions)
 
     def get_planified_action(self, env):
         """
-        Get action from the planifier based on teacher expertise.
+        Get an action from the planner based on teacher expertise.
 
         The teacher will first attempt to find a path without traps with probability
         equal to teacher_expertise. If this fails or if the teacher decides to allow
         traps (based on expertise), it will find a path allowing traps.
 
-        Parameters
-        ----------
-        env : Environment
-            The environment instance that provides path planning capabilities
+        Args:
+            env: The environment providing path planning capabilities.
 
-        Returns
-        -------
-        int
-            The planned action to take
+        Returns:
+            int: The planned action to take.
         """
-        # First attempt: try path without traps based on teacher expertise
         if np.random.random() < self.teacher_expertise:
             planned_actions = env.find_shortest_path(allow_traps=False)
             if planned_actions is not None:
                 return planned_actions[0]
 
-        # Second attempt: allow traps
         planned_actions = env.find_shortest_path(allow_traps=True)
         if planned_actions is None:
-            return (
-                self.get_random_action()
-            )  # Fallback to random action if no path found
-        return planned_actions[0]  # Return first action from the planned path
+            return self.get_random_action()
+        return planned_actions[0]
 
     def get_action(self, state, env=None):
         """
-        Get action based on current state and interaction type.
-        - For stochastic: Uses Q-values difference threshold
-        - For uniform: Uses fixed probability
+        Select an action based on the current state and interaction type.
+
+        Args:
+            state (int): The current state.
+            env: The environment instance (required for stochastic interaction).
+
+        Returns:
+            int: The action selected.
         """
         if env is None:
             raise ValueError("Environment must be provided for stochastic interaction")

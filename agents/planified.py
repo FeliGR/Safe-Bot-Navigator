@@ -10,6 +10,7 @@ class PlanifiedAgent:
         steps_taken (int): The number of steps taken in the current episode.
         total_reward (float): The total reward accumulated in the current episode.
     """
+
     def __init__(self):
         """Initialize the PlanifiedAgent."""
         self.current_plan = None
