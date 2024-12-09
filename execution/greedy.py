@@ -6,7 +6,15 @@ import importlib
 
 
 def list_saved_agents(base_dir="trained_agents"):
-    """List all saved agents and their configurations"""
+    """
+    List all saved agents and their configurations in the specified directory.
+
+    Args:
+        base_dir (str): The base directory where trained agents are stored.
+
+    Returns:
+        list: A list of dictionaries containing agent information and summaries.
+    """
     if not os.path.exists(base_dir):
         print(f"No trained agents found in {base_dir}")
         return []
@@ -68,7 +76,12 @@ def list_saved_agents(base_dir="trained_agents"):
 
 
 def select_agent():
-    """Interactive agent selection"""
+    """
+    Interactively select an agent from the list of saved agents.
+
+    Returns:
+        dict or None: The selected agent's information or None if no selection is made.
+    """
     agents = list_saved_agents()
     if not agents:
         return None
@@ -93,7 +106,15 @@ def select_agent():
 
 
 def load_agent(agent_info):
-    """Load agent dynamically"""
+    """
+    Load an agent dynamically from its saved files.
+
+    Args:
+        agent_info (dict): The information dictionary of the agent to load.
+
+    Returns:
+        object: The loaded agent instance.
+    """
 
     agent_module = importlib.import_module(agent_info["agent_config"]["agent_module"])
 
@@ -107,8 +128,15 @@ def load_agent(agent_info):
 def run_greedy_evaluation(
     agent_info, episodes=5, render_delay=0.5, render_mode="human"
 ):
-    """Run greedy evaluation of the selected agent"""
+    """
+    Run a greedy evaluation of the selected agent in the environment.
 
+    Args:
+        agent_info (dict): The information dictionary of the agent to evaluate.
+        episodes (int, optional): Number of episodes to run. Defaults to 5.
+        render_delay (float, optional): Delay between renders in seconds. Defaults to 0.5.
+        render_mode (str, optional): Mode to render ('human' or None). Defaults to 'human'.
+    """
     agent = load_agent(agent_info)
     with open(os.path.join(agent_info["path"], "env.pkl"), "rb") as f:
         env = pickle.load(f)
