@@ -1,3 +1,5 @@
+import sys
+import os
 from train_functions import create_scenario
 
 env_config = {

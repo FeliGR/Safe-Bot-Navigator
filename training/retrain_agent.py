@@ -1,6 +1,11 @@
-from train_functions import retrain_agent
+import sys
+import os
 
-from greedy import list_saved_agents, select_agent
+# Add the project root directory to Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from train_functions import retrain_agent
+from execution.greedy import list_saved_agents, select_agent
 
 if __name__ == "__main__":
     train_config = {

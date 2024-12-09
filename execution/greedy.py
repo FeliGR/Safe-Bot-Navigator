@@ -4,7 +4,7 @@ import pickle
 import time
 import numpy as np
 import importlib
-from environment import GridEnvironment
+from environment.environment import GridEnvironment
 
 
 def list_saved_agents(base_dir="trained_agents"):

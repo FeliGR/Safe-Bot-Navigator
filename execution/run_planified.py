@@ -1,4 +1,4 @@
-from environment import GridEnvironment
+from environment.environment import GridEnvironment
 from agents.planified import PlanifiedAgent
 import time
 
