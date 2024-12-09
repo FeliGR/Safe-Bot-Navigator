@@ -5,6 +5,18 @@ from agents.basic_qlearning import BasicQLearningAgent
 
 
 class QLearningAgent(BasicQLearningAgent):
+    """
+    Q-Learning Agent with Manual Demonstrations based on Marie's 2005 methodology.
+
+    This agent allows for an initial phase of manual demonstrations where a human operator
+    controls the agent using keyboard inputs. After the demonstration phase, the agent continues
+    to learn autonomously using the Q-learning algorithm.
+
+    Attributes:
+        manual_episodes (int): Number of episodes to run with manual control.
+        action_keys (dict): Mapping of keyboard keys to action indices.
+    """
+
     def __init__(
         self,
         state_size,
@@ -16,6 +28,19 @@ class QLearningAgent(BasicQLearningAgent):
         epsilon_decay=0.001,
         manual_episodes=20,
     ):
+        """
+        Initialize the QLearningAgent with manual demonstration parameters.
+
+        Args:
+            state_size (int): Size of the state space.
+            n_actions (int): Number of possible actions.
+            learning_rate (float, optional): Learning rate for Q-value updates.
+            gamma (float, optional): Discount factor for future rewards.
+            epsilon (float, optional): Initial exploration rate.
+            epsilon_min (float, optional): Minimum exploration rate.
+            epsilon_decay (float, optional): Decay rate for the exploration rate.
+            manual_episodes (int, optional): Number of episodes for manual demonstrations.
+        """
         super().__init__(
             state_size,
             n_actions,
@@ -27,14 +52,22 @@ class QLearningAgent(BasicQLearningAgent):
         )
         self.manual_episodes = manual_episodes
         self.action_keys = {
-            pygame.K_RIGHT: 0,  # Move right
-            pygame.K_DOWN: 1,  # Move down
-            pygame.K_LEFT: 2,  # Move left
-            pygame.K_UP: 3,  # Move up
+            pygame.K_RIGHT: 0,
+            pygame.K_DOWN: 1,
+            pygame.K_LEFT: 2,
+            pygame.K_UP: 3,
         }
 
     def _get_manual_action(self, env):
-        """Get action from keyboard input"""
+        """
+        Get an action from the user via keyboard input.
+
+        Args:
+            env: The environment instance (used for handling events).
+
+        Returns:
+            int or None: The action selected by the user, or None if the window is closed.
+        """
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -54,7 +87,17 @@ class QLearningAgent(BasicQLearningAgent):
         render_mode="human",
         render_delay=0.1,
     ):
-        """Train with manual demonstrations followed by autonomous learning"""
+        """
+        Train the agent using manual demonstrations followed by autonomous learning.
+
+        Args:
+            env: The environment to train the agent in.
+            episodes (int, optional): Total number of training episodes.
+            max_steps (int, optional): Maximum steps per episode.
+            render_freq (int, optional): Frequency to render the environment.
+            render_mode (str, optional): Mode to render ('human' or None).
+            render_delay (float, optional): Delay between renders in seconds.
+        """
         print(f"\nStarting {self.manual_episodes} manual demonstration episodes...")
         print("Use arrow keys to control the agent")
 
@@ -66,7 +109,6 @@ class QLearningAgent(BasicQLearningAgent):
             "episodes": list(range(episodes)),
         }
 
-        # Manual demonstration phase
         for episode in range(self.manual_episodes):
             state = env.reset()
             total_reward = 0
@@ -78,9 +120,8 @@ class QLearningAgent(BasicQLearningAgent):
                 env.render(mode=render_mode)
                 time.sleep(render_delay)
 
-                # Get action from keyboard
                 action = self._get_manual_action(env)
-                if action is None:  # Quit requested
+                if action is None:
                     env.close()
                     return
 
@@ -91,7 +132,6 @@ class QLearningAgent(BasicQLearningAgent):
                 total_reward += reward
                 steps += 1
 
-            # Track metrics
             history["rewards"].append(total_reward)
             history["epsilon"].append(self.epsilon)
             history["max_q"].append(np.max(self.q_table))
@@ -99,8 +139,6 @@ class QLearningAgent(BasicQLearningAgent):
 
             print(f"Episode completed - Steps: {steps}, Reward: {total_reward:.2f}")
 
-        # Rest of training code remains the same...
-        # Autonomous learning phase
         print("\nStarting autonomous learning phase...")
         for episode in range(self.manual_episodes, episodes):
             state = env.reset()
