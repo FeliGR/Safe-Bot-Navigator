@@ -1,4 +1,7 @@
-from train_functions import create_scenario
+import json
+import os
+import time
+from train_functions import train_and_compare
 
 env_config = {
     "size": 10,
@@ -16,17 +19,30 @@ train_config = {
     "render_delay": 0.1,
 }
 
-agent_config = {
+agent_config_no_risk = {
     "agent_module": "agents.basic_qlearning",
     "agent_class": "BasicQLearningAgent",
     "learning_rate": 0.1,
     "gamma": 0.99,
     "epsilon": 1.0,
     "epsilon_min": 0.01,
+    "epsilon_decay": 0.000099,  # Ajusta según corresponda
+    "xi": 0.0,  # Sin sensibilidad al riesgo
+    "state_size": env_config["size"] ** 2,
+    "n_actions": 4,  # Asumiendo 4 acciones (arriba, abajo, izquierda, derecha)
 }
 
-agent_config["epsilon_decay"] = (
-    agent_config["epsilon"] - agent_config["epsilon_min"]
-) / train_config["episodes"]
+agent_config_with_risk = {
+    "agent_module": "agents.basic_qlearning",
+    "agent_class": "BasicQLearningAgent",
+    "learning_rate": 0.1,
+    "gamma": 0.99,
+    "epsilon": 1.0,
+    "epsilon_min": 0.01,
+    "epsilon_decay": 0.000099,  # Ajusta según corresponda
+    "xi": 1.0,  # Con sensibilidad al riesgo
+    "state_size": env_config["size"] ** 2,
+    "n_actions": 4,  # Asumiendo 4 acciones
+}
 
-create_scenario(env_config, agent_config, train_config)
+train_and_compare(env_config, agent_config_no_risk, agent_config_with_risk, train_config)

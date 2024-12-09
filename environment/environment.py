@@ -194,7 +194,7 @@ class GridEnvironment:
                 time.sleep(0.01)
 
     def step(self, action):
-        """Execute action and return new state, reward and done flag"""
+        """Ejecutar acción y retornar nuevo estado, recompensa, bandera de finalización y si es error"""
 
         original_pos = self.robot_pos.copy()
 
@@ -207,6 +207,8 @@ class GridEnvironment:
         elif action == self.MOVE_UP:
             self.robot_pos[0] -= 1
 
+        is_error = False  # Indicador de estado de error
+
         if 0 <= self.robot_pos[0] < self.size and 0 <= self.robot_pos[1] < self.size:
             cell_type = self.grid[self.robot_pos[0], self.robot_pos[1]]
 
@@ -217,10 +219,12 @@ class GridEnvironment:
                 self.text_start_time = time.time()
                 self.text_color = self.RED
                 self._wait_for_message()
+                is_error = True
                 return (
                     self._pos_to_state(tuple(self.robot_pos)),
                     self.rewards["collision"],
                     True,
+                    is_error,
                 )
             elif cell_type == self.TRAP:
                 if np.random.random() < self.trap_danger:
@@ -229,23 +233,26 @@ class GridEnvironment:
                     self.text_start_time = time.time()
                     self.text_color = self.RED
                     self._wait_for_message()
+                    is_error = True
                     return (
                         self._pos_to_state(tuple(self.robot_pos)),
                         self.rewards["trap"],
                         True,
+                        is_error,
                     )
         else:
-
             self.robot_pos = original_pos
             self.show_text = True
             self.text_message = "FAIL - Wall!"
             self.text_start_time = time.time()
             self.text_color = self.RED
             self._wait_for_message()
+            is_error = True
             return (
                 self._pos_to_state(tuple(self.robot_pos)),
                 self.rewards["collision"],
                 True,
+                is_error,
             )
 
         done = tuple(self.robot_pos) == tuple(self.target_pos)
@@ -258,7 +265,7 @@ class GridEnvironment:
             self.text_color = self.GREEN
             self._wait_for_message()
 
-        return self._pos_to_state(tuple(self.robot_pos)), reward, done
+        return self._pos_to_state(tuple(self.robot_pos)), reward, done, is_error
 
     def find_shortest_path(self, allow_traps=False):
         """Find the shortest path from current position to target.

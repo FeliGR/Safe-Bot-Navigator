@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 class BasicQLearningAgent:
@@ -12,42 +13,54 @@ class BasicQLearningAgent:
 
     def __init__(
         self,
+        learning_rate,
+        gamma,
+        epsilon,
+        epsilon_min,
+        epsilon_decay,
+        xi,
         state_size,
         n_actions,
-        learning_rate=0.1,
-        gamma=0.95,
-        epsilon=1.0,
-        epsilon_min=0.01,
-        epsilon_decay=0.001,
     ):
-        self.state_size = state_size
-        self.n_actions = n_actions
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
+        self.xi = xi
+        self.state_size = state_size
+        self.n_actions = n_actions
         self.q_table = np.zeros((state_size, n_actions))
+        self.q_risk = np.zeros((state_size, n_actions))
         self.train_history = {}
         self.greedy_history = {}
 
     def get_action(self, state):
-        """Choose action using epsilon-greedy policy"""
+        """Elegir acción usando una política epsilon-greedy basada en Qξ"""
         if np.random.random() < self.epsilon:
             return np.random.randint(self.n_actions)
 
-        options = np.argwhere(
-            self.q_table[state] == np.max(self.q_table[state])
-        ).flatten()
+        q_xi = self.xi * self.q_table[state] - self.q_risk[state]
+        options = np.argwhere(q_xi == np.max(q_xi)).flatten()
         return np.random.choice(options)
 
-    def update(self, state, action, reward, next_state):
-        """Update Q-value for state-action pair"""
+    def update(self, state, action, reward, next_state, risk_reward):
+        """Actualizar Q y Q_risk para el par estado-acción"""
+        # Actualización de Q
         current_q = self.q_table[state][action]
         future_q = np.max(self.q_table[next_state])
         self.q_table[state][action] = current_q + self.learning_rate * (
             reward + self.gamma * future_q - current_q
         )
+
+        # Actualización de Q_risk
+        current_q_risk = self.q_risk[state][action]
+        future_q_risk = np.max(self.q_risk[next_state])
+        self.q_risk[state][action] = current_q_risk + self.learning_rate * (
+            risk_reward + self.gamma * future_q_risk - current_q_risk
+        )
+
+        # Actualización de Qξ si es necesario
 
     def decay_epsilon(self):
         """Decay epsilon after an episode by subtracting epsilon_decay"""
@@ -62,23 +75,13 @@ class BasicQLearningAgent:
         render_mode=None,
         render_delay=0.1,
     ):
-        """Train the agent using Q-learning
+        """Entrenar el agente usando Q-Learning con sensibilidad al riesgo"""
 
-        Args:
-            env: The environment to train on
-            episodes: Number of episodes to train for
-            max_steps: Maximum steps per episode
-            render_freq: How often to render the environment (episodes)
-            render_mode: Rendering mode ('human' or None)
-            render_delay: Delay between renders in seconds
-
-        Returns:
-            dict: Training history containing rewards, epsilon values and max Q-values
-        """
         history = {
             "rewards": [],
             "epsilon": [],
             "max_q": [],
+            "max_q_risk": [],
             "steps": [],
             "episodes": list(range(episodes)),
         }
@@ -86,6 +89,7 @@ class BasicQLearningAgent:
         for episode in range(episodes):
             state = env.reset()
             total_reward = 0
+            total_risk = 0
             steps = 0
             done = False
 
@@ -95,12 +99,14 @@ class BasicQLearningAgent:
                     time.sleep(render_delay)
 
                 action = self.get_action(state)
-                next_state, reward, done = env.step(action)
+                next_state, reward, done, is_error = env.step(action)
 
-                self.update(state, action, reward, next_state)
+                risk_reward = 1 if is_error else 0
+                self.update(state, action, reward, next_state, risk_reward)
 
                 state = next_state
                 total_reward += reward
+                total_risk += risk_reward
                 steps += 1
 
             if render_mode and episode % render_freq == 0:
@@ -110,13 +116,15 @@ class BasicQLearningAgent:
             history["rewards"].append(total_reward)
             history["epsilon"].append(self.epsilon)
             history["max_q"].append(np.max(self.q_table))
+            history["max_q_risk"].append(np.max(self.q_risk))
             history["steps"].append(steps)
 
             if episode % 100 == 0:
                 print(
                     f"Episode {episode}/{episodes}, Steps: {steps}, "
-                    f"Reward: {total_reward:.2f}, Epsilon: {self.epsilon:.2f}, "
-                    f"Max Q-value: {np.max(self.q_table):.2f}"
+                    f"Reward: {total_reward:.2f}, Risk: {total_risk}, "
+                    f"Epsilon: {self.epsilon:.2f}, Max Q: {np.max(self.q_table):.2f}, "
+                    f"Max Q_risk: {np.max(self.q_risk):.2f}"
                 )
 
             self.decay_epsilon()
@@ -129,17 +137,17 @@ class BasicQLearningAgent:
     def run_greedy(
         self, env, episodes=1, max_steps=1000, render_mode="human", render_delay=0.1
     ):
-        """Run the agent using a greedy policy (no exploration) for multiple episodes.
-
+        """Ejecutar el agente usando una política greedy (sin exploración) para múltiples episodios.
+        
         Args:
-            env: The environment to run in
-            episodes: Number of episodes to run
-            max_steps: Maximum steps per episode
-            render_mode: How to render the environment (None or 'human')
-            render_delay: Delay between renders in seconds
-
+            env: El entorno en el que ejecutar
+            episodes: Número de episodios a ejecutar
+            max_steps: Número máximo de pasos por episodio
+            render_mode: Cómo renderizar el entorno (None o 'human')
+            render_delay: Retraso entre renders en segundos
+        
         Returns:
-            dict: History containing rewards, steps, and success rate
+            dict: Historial que contiene recompensas, pasos y tasa de éxito
         """
         history = {
             "rewards": [],
@@ -160,10 +168,17 @@ class BasicQLearningAgent:
                     time.sleep(render_delay)
 
                 action = np.argmax(self.q_table[state])
-                next_state, reward, done = env.step(action)
+                next_state, reward, done, is_error = env.step(action)
 
                 state = next_state
                 total_reward += reward
+
+                if is_error:
+                    history["success"].append(True)
+                    done = True
+                else:
+                    history["success"].append(done)
+
                 steps += 1
 
             if render_mode:
@@ -172,7 +187,6 @@ class BasicQLearningAgent:
 
             history["rewards"].append(total_reward)
             history["steps"].append(steps)
-            history["success"].append(done)
 
             if episode % 10 == 0:
                 success_rate = sum(history["success"][-10:]) / min(10, episode + 1)
@@ -250,3 +264,87 @@ class BasicQLearningAgent:
             plt.savefig(save_path, bbox_inches="tight")
         plt.show()
         plt.close()
+
+    def adjust_xi(self, increment=0.01, max_xi=10.0):
+        """Incrementar ξ hasta alcanzar el máximo permitido"""
+        if self.xi < max_xi:
+            self.xi += increment
+            print(f"ξ incrementado a {self.xi:.2f}")
+
+    def calculate_risk_map(self, env):
+        """Calcula el riesgo promedio por celda basado en Q_risk."""
+        # Inicializar como arreglos 2D
+        risk_map = np.zeros((env.size, env.size))
+        count = np.zeros((env.size, env.size))
+
+        for state in range(self.state_size):
+            i, j = divmod(state, env.size)
+            for action in range(self.n_actions):
+                risk_map[i, j] += self.q_risk[state, action]
+                count[i, j] += 1
+
+        # Evitar división por cero
+        count[count == 0] = 1
+        risk_map /= count
+        return risk_map
+
+    def plot_risk_map(self, env, save_path=None):
+        """Genera y muestra un mapa de calor del riesgo."""
+        risk_map = self.calculate_risk_map(env)
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(risk_map, annot=True, cmap="Reds", fmt=".2f", cbar=True)
+        plt.title("Mapa de Riesgo")
+        plt.xlabel("Columna")
+        plt.ylabel("Fila")
+        plt.gca().invert_yaxis()  # Para que la fila 0 esté en la parte superior
+
+        if save_path:
+            plt.savefig(save_path)
+        plt.show()
+        plt.close()
+
+    def plot_comparison(agent_no_risk, agent_with_risk):
+        """Genera gráficos comparativos entre dos agentes."""
+        metrics = ["rewards", "steps", "success"]
+        episodes = agent_no_risk.train_history["episodes"]
+
+        plt.figure(figsize=(15, 5))
+
+        for i, metric in enumerate(metrics, 1):
+            plt.subplot(1, 3, i)
+            plt.plot(episodes, agent_no_risk.train_history[metric], label="Sin Riesgo")
+            plt.plot(episodes, agent_with_risk.train_history[metric], label="Con Riesgo")
+            plt.title(f"Comparación de {metric.capitalize()}")
+            plt.xlabel("Episodios")
+            plt.ylabel(metric.capitalize())
+            plt.legend()
+            plt.grid(True)
+
+        plt.tight_layout()
+        plt.show()
+
+    def plot_metrics_comparison(agent_no_risk, agent_with_risk):
+        """Genera gráficos comparativos de las métricas entre dos agentes."""
+        import matplotlib.pyplot as plt
+
+        metrics = ["rewards", "risk", "collisions", "success", "steps"]
+        episodes = agent_no_risk.train_history["episodes"]
+
+        plt.figure(figsize=(20, 10))
+
+        for i, metric in enumerate(metrics, 1):
+            plt.subplot(2, 3, i)
+            if metric == "risk":
+                plt.plot(episodes, agent_no_risk.train_history.get(metric, [0]*len(episodes)), label="Sin Riesgo")
+                plt.plot(episodes, agent_with_risk.train_history.get(metric, [0]*len(episodes)), label="Con Riesgo")
+            else:
+                plt.plot(episodes, agent_no_risk.train_history.get(metric, [0]*len(episodes)), label="Sin Riesgo")
+                plt.plot(episodes, agent_with_risk.train_history.get(metric, [0]*len(episodes)), label="Con Riesgo")
+            plt.title(f"Comparación de {metric.capitalize()}")
+            plt.xlabel("Episodios")
+            plt.ylabel(metric.capitalize())
+            plt.legend()
+            plt.grid(True)
+
+        plt.tight_layout()
+        plt.show()
