@@ -24,10 +24,10 @@ agent_config = {
     "epsilon": 0,
     "epsilon_min": 0,
     "planified_episodes": 0,
-    "q_threshold": 0.2,  # Threshold for deciding between planifier and RL actions
-    "interaction_type": "stochastic",  # "uniform" or "stochastic"
+    "q_threshold": 0.2,
+    "interaction_type": "stochastic",
     "planner_probability": 0.2,
-    "teacher_expertise": 1,  # Probability of teacher trying trap-free path first
+    "teacher_expertise": 1,
 }
 
 agent_config["epsilon_decay"] = (
