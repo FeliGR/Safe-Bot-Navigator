@@ -3,22 +3,28 @@ import matplotlib.pyplot as plt
 
 
 class PlanifiedAgent:
+    """Agent that follows a planned path in the environment.
+
+    Attributes:
+        current_plan (list): The current sequence of actions to reach the target.
+        steps_taken (int): The number of steps taken in the current episode.
+        total_reward (float): The total reward accumulated in the current episode.
+    """
     def __init__(self):
-        """Initialize the planified agent"""
+        """Initialize the PlanifiedAgent."""
         self.current_plan = None
         self.steps_taken = 0
         self.total_reward = 0
 
     def get_action(self, env):
-        """Get the next action from the planned path
+        """Get the next action from the planned path.
 
         Args:
-            env: The environment instance
+            env: The environment instance.
 
         Returns:
-            int: The next action to take
+            int: The next action to take.
         """
-
         if self.current_plan is None or not self.current_plan:
 
             self.current_plan = env.find_shortest_path(allow_traps=False)
@@ -34,15 +40,15 @@ class PlanifiedAgent:
         return self.current_plan.pop(0)
 
     def run_episode(self, env, render=False, render_delay=0.1):
-        """Run a single episode
+        """Run a single episode in the environment.
 
         Args:
-            env: The environment to run on
-            render: Whether to render the environment
-            render_delay: Delay between renders in seconds
+            env: The environment to run on.
+            render (bool, optional): Whether to render the environment. Defaults to False.
+            render_delay (float, optional): Delay between renders in seconds. Defaults to 0.1.
 
         Returns:
-            tuple: (total_reward, steps_taken, success)
+            tuple: Total reward, steps taken, and success flag.
         """
         state = env.reset()
         self.current_plan = None
@@ -68,15 +74,15 @@ class PlanifiedAgent:
         return self.total_reward, self.steps_taken, self.total_reward > 0
 
     def run_episodes(self, env, num_episodes=100, render_freq=10):
-        """Run multiple episodes and track performance
+        """Run multiple episodes and track performance.
 
         Args:
-            env: The environment to run on
-            num_episodes: Number of episodes to run
-            render_freq: How often to render the environment (episodes)
+            env: The environment to run on.
+            num_episodes (int, optional): Number of episodes to run. Defaults to 100.
+            render_freq (int, optional): Frequency of rendering the environment. Defaults to 10.
 
         Returns:
-            dict: Statistics about the episodes
+            dict: A history of rewards, steps, and success rates.
         """
         history = {
             "rewards": [],
@@ -107,11 +113,11 @@ class PlanifiedAgent:
         return history
 
     def plot_history(self, history, save_path=None):
-        """Plot agent histories.
+        """Plot the agent's performance history.
 
         Args:
-            history: The history to plot
-            save_path: Optional path to save the plot
+            history (dict): The history data to plot.
+            save_path (str, optional): Path to save the plot image. Defaults to None.
         """
         metrics = [k for k in history.keys() if k != "episodes"]
         episodes = history["episodes"]
