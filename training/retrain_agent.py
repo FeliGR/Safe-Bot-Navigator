@@ -5,7 +5,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from train_functions import retrain_agent
-from execution.greedy import list_saved_agents, select_agent
+from execution.greedy import select_agent
 
 if __name__ == "__main__":
     train_config = {
