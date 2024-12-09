@@ -38,7 +38,7 @@ ENV/
 .settings/
 
 # Project specific
-robot_project/trained_agents/
+trained_agents/
 
 # Jupyter Notebook
 .ipynb_checkpoints
