@@ -1,5 +1,3 @@
-import numpy as np
-import json
 import time
 import matplotlib.pyplot as plt
 
