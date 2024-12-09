@@ -10,7 +10,7 @@ if __name__ == "__main__":
         "render_mode": None,
         "render_delay": 0.1,
     }
-    
+
     selected_agent = select_agent()
     if selected_agent:
         retrain_agent(selected_agent["agent"], selected_agent["env"], train_config)

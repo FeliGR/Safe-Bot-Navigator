@@ -3,6 +3,7 @@ import time
 from agents.basic_qlearning import BasicQLearningAgent
 from agents.planified import PlanifiedAgent
 
+
 class QLearningAgentMarie2005(BasicQLearningAgent):
     def __init__(
         self,
@@ -37,7 +38,9 @@ class QLearningAgentMarie2005(BasicQLearningAgent):
         render_delay=0.1,
     ):
         """Train with planified demonstrations followed by autonomous learning"""
-        print(f"\nStarting {self.planified_episodes} planified demonstration episodes...")
+        print(
+            f"\nStarting {self.planified_episodes} planified demonstration episodes..."
+        )
 
         history = {
             "rewards": [],
@@ -55,12 +58,12 @@ class QLearningAgentMarie2005(BasicQLearningAgent):
             done = False
 
             print(f"\nPlanified Episode {episode + 1}/{self.planified_episodes}")
-            
+
             # Get the planned path for this episode
             planned_actions = env.find_shortest_path(allow_traps=False)
             if planned_actions is None:
                 planned_actions = env.find_shortest_path(allow_traps=True)
-            
+
             if planned_actions is None:
                 print("Warning: No path found! Skipping episode.")
                 continue
@@ -73,7 +76,7 @@ class QLearningAgentMarie2005(BasicQLearningAgent):
                 # Get action from the planned path
                 action = planned_actions[steps]
                 next_state, reward, done = env.step(action)
-                
+
                 # Update Q-table with the planified action
                 self.update(state, action, reward, next_state)
 

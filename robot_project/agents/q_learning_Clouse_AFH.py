@@ -4,11 +4,10 @@ from agents.basic_qlearning import BasicQLearningAgent
 from agents.planified import PlanifiedAgent
 
 
-
 class QLearningAgentTeacher(BasicQLearningAgent):
     """
     Clouse Ask for Help Q-Learning Agent with configurable interaction types and teacher expertise.
-    
+
     This agent implements a Q-learning algorithm that can learn from both autonomous exploration
     and a teaching agent (planner). The interaction between the agent and the teacher can be
     configured in different ways.
@@ -42,6 +41,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
     teacher_expertise : float, optional (default=0.8)
         Probability that the teacher will attempt to find a path without traps first
     """
+
     # Interaction type constants
     UNIFORM = "uniform"
     STOCHASTIC = "stochastic"
@@ -87,7 +87,9 @@ class QLearningAgentTeacher(BasicQLearningAgent):
         render_delay=0.1,
     ):
         """Train with planified demonstrations followed by autonomous learning"""
-        print(f"\nStarting {self.planified_episodes} planified demonstration episodes...")
+        print(
+            f"\nStarting {self.planified_episodes} planified demonstration episodes..."
+        )
 
         history = {
             "rewards": [],
@@ -105,12 +107,12 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             done = False
 
             print(f"\nPlanified Episode {episode + 1}/{self.planified_episodes}")
-            
+
             # Get the planned path for this episode
             planned_actions = env.find_shortest_path(allow_traps=False)
             if planned_actions is None:
                 planned_actions = env.find_shortest_path(allow_traps=True)
-            
+
             if planned_actions is None:
                 print("Warning: No path found! Skipping episode.")
                 continue
@@ -123,7 +125,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
                 # Get action from the planned path
                 action = planned_actions[steps]
                 next_state, reward, done = env.step(action)
-                
+
                 # Update Q-table with the planified action
                 self.update(state, action, reward, next_state)
 
@@ -178,23 +180,23 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             env.close()
 
         self.train_history = history
-    
+
     def get_random_action(self):
         return np.random.randint(0, self.n_actions)
 
     def get_planified_action(self, env):
         """
         Get action from the planifier based on teacher expertise.
-        
+
         The teacher will first attempt to find a path without traps with probability
         equal to teacher_expertise. If this fails or if the teacher decides to allow
         traps (based on expertise), it will find a path allowing traps.
-        
+
         Parameters
         ----------
         env : Environment
             The environment instance that provides path planning capabilities
-            
+
         Returns
         -------
         int
@@ -205,11 +207,13 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             planned_actions = env.find_shortest_path(allow_traps=False)
             if planned_actions is not None:
                 return planned_actions[0]
-        
+
         # Second attempt: allow traps
         planned_actions = env.find_shortest_path(allow_traps=True)
         if planned_actions is None:
-            return self.get_random_action()  # Fallback to random action if no path found
+            return (
+                self.get_random_action()
+            )  # Fallback to random action if no path found
         return planned_actions[0]  # Return first action from the planned path
 
     def get_action(self, state, env=None):
@@ -228,15 +232,15 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             if q_diff < self.q_threshold:
                 print("Using planifier (stochastic)...")
                 return self.get_planified_action(env)
-        
+
         elif self.interaction_type == self.UNIFORM:
             if np.random.random() < self.planner_probability:
                 print("Using planifier (uniform)...")
                 return self.get_planified_action(env)
-        
+
         if np.random.random() < self.epsilon:
             return self.get_random_action()
-        
+
         options = np.argwhere(
             self.q_table[state] == np.max(self.q_table[state])
         ).flatten()

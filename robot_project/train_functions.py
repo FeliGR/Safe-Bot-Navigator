@@ -5,6 +5,7 @@ import json
 import os
 import time
 
+
 def create_scenario(env_config, agent_config, train_config):
     """Create a new scenario with agent specified in agent_config
 
