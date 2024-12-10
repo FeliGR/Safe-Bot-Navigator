@@ -8,7 +8,7 @@ import importlib
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def list_saved_agents(base_dir="../trained_agents"):
+def list_saved_agents(base_dir="./trained_agents"):
     """List all saved agents and their configurations"""
     if not os.path.exists(base_dir):
         print(f"No trained agents found in {base_dir}")

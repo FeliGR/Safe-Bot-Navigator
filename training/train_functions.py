@@ -3,13 +3,36 @@ import importlib
 import sys
 import os
 import time
+import json
+import numpy as np
 
 # Add the project root directory to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from environment.environment import GridEnvironment
 from agents.basic_qlearning import BasicQLearningAgent, plot_comparison
-import json
+
+
+def make_serializable(obj):
+    """
+    Convierte recursivamente todos los elementos de un objeto a formatos serializables por JSON.
+    
+    Args:
+        obj: El objeto a convertir.
+
+    Returns:
+        El objeto convertido en un formato serializable.
+    """
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {k: make_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [make_serializable(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(make_serializable(item) for item in obj)
+    else:
+        return obj
 
 
 def create_scenario(env_config, agent_config, train_config):
@@ -87,71 +110,89 @@ def retrain_agent(agent, env, train_config):
 
 
 def train_and_compare(env_config, agent_config_no_risk, agent_config_with_risk, train_config):
-    """Entrena dos agentes y los compara."""
+    """Entrena dos agentes y los compara en el mismo entorno.
+
+    Args:
+        env_config (dict): Configuración del entorno, incluyendo la cuadrícula predefinida.
+        agent_config_no_risk (dict): Configuración para el agente sin sensibilidad al riesgo.
+        agent_config_with_risk (dict): Configuración para el agente con sensibilidad al riesgo.
+        train_config (dict): Configuración del entrenamiento.
+    """
+    
+    # Asegurarse de que 'grid' está en env_config
+    if "grid" not in env_config:
+        raise ValueError("La configuración del entorno debe incluir una cuadrícula predefinida bajo la clave 'grid'.")
+
+    # Convertir env_config a una versión serializable
+    try:
+        env_config_serializable = make_serializable(env_config)
+    except TypeError as e:
+        print(f"Error al convertir env_config a serializable: {e}")
+        return
 
     # Entrenar agente sin riesgo
     agent_params_no_risk = agent_config_no_risk.copy()
     agent_params_no_risk.pop("agent_module", None)
     agent_params_no_risk.pop("agent_class", None)
-
+    
     agent_no_risk = BasicQLearningAgent(**agent_params_no_risk)
-    env_no_risk = GridEnvironment(**env_config)
+    env_no_risk = GridEnvironment(**env_config)  # Utiliza la cuadrícula predefinida
     agent_no_risk.train(env_no_risk, **train_config)
-
+    
     # Guardar agente sin riesgo
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     agent_dir_no_risk = f"{agent_config_no_risk['agent_class']}_no_risk_{timestamp}"
     full_path_no_risk = os.path.join("trained_agents", agent_dir_no_risk)
     os.makedirs(full_path_no_risk, exist_ok=True)
-
+    
     with open(os.path.join(full_path_no_risk, "agent.pkl"), "wb") as f:
         pickle.dump(agent_no_risk, f)
-
+    
     with open(os.path.join(full_path_no_risk, "env.pkl"), "wb") as f:
         pickle.dump(env_no_risk, f)
-
+    
     with open(os.path.join(full_path_no_risk, "train_config.json"), "w") as f:
         json.dump(train_config, f)
-
+    
     with open(os.path.join(full_path_no_risk, "agent_config.json"), "w") as f:
         json.dump(agent_config_no_risk, f)
-
+    
     with open(os.path.join(full_path_no_risk, "env_config.json"), "w") as f:
-        json.dump(env_config, f)
-
+        json.dump(env_config_serializable, f)
+    
     agent_no_risk.plot_history()
-
+    
     # Entrenar agente con riesgo
     agent_params_with_risk = agent_config_with_risk.copy()
     agent_params_with_risk.pop("agent_module", None)
     agent_params_with_risk.pop("agent_class", None)
-
+    
     agent_with_risk = BasicQLearningAgent(**agent_params_with_risk)
-    env_with_risk = GridEnvironment(**env_config)
+    env_with_risk = GridEnvironment(**env_config)  # Utiliza la misma cuadrícula predefinida
     agent_with_risk.train(env_with_risk, **train_config)
-
+    
     # Guardar agente con riesgo
     agent_dir_with_risk = f"{agent_config_with_risk['agent_class']}_with_risk_{timestamp}"
     full_path_with_risk = os.path.join("trained_agents", agent_dir_with_risk)
     os.makedirs(full_path_with_risk, exist_ok=True)
-
+    
     with open(os.path.join(full_path_with_risk, "agent.pkl"), "wb") as f:
         pickle.dump(agent_with_risk, f)
-
+    
     with open(os.path.join(full_path_with_risk, "env.pkl"), "wb") as f:
         pickle.dump(env_with_risk, f)
-
+    
     with open(os.path.join(full_path_with_risk, "train_config.json"), "w") as f:
         json.dump(train_config, f)
-
+    
     with open(os.path.join(full_path_with_risk, "agent_config.json"), "w") as f:
         json.dump(agent_config_with_risk, f)
-
+    
     with open(os.path.join(full_path_with_risk, "env_config.json"), "w") as f:
-        json.dump(env_config, f)
-
+        json.dump(env_config_serializable, f)
+    
     agent_with_risk.plot_history()
     agent_with_risk.plot_risk_map(env_with_risk, save_path=os.path.join(full_path_with_risk, "risk_map_with_risk.png"))
-
+    
     # Comparar ambos agentes utilizando la función externa
     plot_comparison(agent_no_risk, agent_with_risk)

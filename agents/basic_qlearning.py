@@ -2,6 +2,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
 
 
 class BasicQLearningAgent:
@@ -310,9 +311,14 @@ class BasicQLearningAgent:
         plt.show()
         plt.close()
 
-# Definir plot_comparison fuera de la clase
-def plot_comparison(agent_no_risk, agent_with_risk):
-    """Genera gráficos comparativos entre dos agentes."""
+def plot_comparison(agent_no_risk, agent_with_risk, window=100):
+    """Genera gráficos comparativos entre dos agentes con suavizado en rewards.
+    
+    Args:
+        agent_no_risk: Agente sin sensibilidad al riesgo.
+        agent_with_risk: Agente con sensibilidad al riesgo.
+        window: Tamaño de la ventana para la media móvil.
+    """
     metrics = ["rewards", "steps"]
     episodes = agent_no_risk.train_history["episodes"]
 
@@ -320,8 +326,25 @@ def plot_comparison(agent_no_risk, agent_with_risk):
 
     for i, metric in enumerate(metrics, 1):
         plt.subplot(1, 3, i)
-        plt.plot(episodes, agent_no_risk.train_history[metric], label="Sin Riesgo")
-        plt.plot(episodes, agent_with_risk.train_history[metric], label="Con Riesgo")
+        if metric == "rewards":
+            # Convertir las recompensas a Series de pandas para aplicar la media móvil
+            rewards_no_risk = pd.Series(agent_no_risk.train_history[metric])
+            rewards_with_risk = pd.Series(agent_with_risk.train_history[metric])
+
+            # Calcular la media móvil
+            rewards_no_risk_smooth = rewards_no_risk.rolling(window=window).mean()
+            rewards_with_risk_smooth = rewards_with_risk.rolling(window=window).mean()
+
+            plt.plot(episodes, rewards_no_risk_smooth, label="Sin Riesgo (Suavizado)")
+            plt.plot(episodes, rewards_with_risk_smooth, label="Con Riesgo (Suavizado)")
+
+            # Opcional: También puedes mostrar las recompensas originales con transparencia
+            plt.plot(episodes, rewards_no_risk, color='blue', alpha=0.1)
+            plt.plot(episodes, rewards_with_risk, color='orange', alpha=0.1)
+        else:
+            plt.plot(episodes, agent_no_risk.train_history[metric], label="Sin Riesgo")
+            plt.plot(episodes, agent_with_risk.train_history[metric], label="Con Riesgo")
+
         plt.title(f"Comparación de {metric.capitalize()}")
         plt.xlabel("Episodios")
         plt.ylabel(metric.capitalize())

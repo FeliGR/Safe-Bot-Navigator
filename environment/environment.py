@@ -17,7 +17,7 @@ class GridEnvironment:
     TRAP = 3
 
     def __init__(
-        self, size=5, obstacle_prob=0.2, trap_prob=0.1, trap_danger=0.3, rewards=None
+        self, size=20, obstacle_prob=0.2, trap_prob=0.05, trap_danger=0.3, rewards=None, grid=None
     ):
         """Initialize environment
 
@@ -27,6 +27,7 @@ class GridEnvironment:
             trap_prob: Probability of placing a trap in empty cells
             trap_danger: Probability of trap ending the episode
             rewards: Dictionary of rewards for different events
+            grid: Predefined grid (optional)
         """
         self.size = size
         self.obstacle_prob = obstacle_prob
@@ -40,7 +41,13 @@ class GridEnvironment:
 
         self.used_starts = set()
 
-        self._generate_environment()
+        if grid is not None:
+            if grid.shape != (self.size, self.size):
+                raise ValueError(f"The grid must have shape ({self.size}, {self.size})")
+            self.grid = grid.copy()
+            self._initialize_positions()
+        else:
+            self._generate_environment()
 
         WINDOW_SIZE = 800
         self.cell_size = WINDOW_SIZE // self.size
@@ -432,3 +439,13 @@ class GridEnvironment:
         if self.screen is not None:
             pygame.quit()
             self.screen = None
+
+    def _initialize_positions(self):
+        """Initialize positions of the robot and target based on the predefined grid"""
+        target_positions = np.argwhere(self.grid == self.TARGET)
+        if target_positions.size == 0:
+            raise ValueError("The grid must contain at least one cell marked as TARGET.")
+
+        # Select the first target position found
+        self.target_pos = target_positions[0].tolist()
+        self.robot_pos = [0, 0]  # You can adjust this according to your needs
