@@ -8,7 +8,7 @@ import time
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from environment.environment import GridEnvironment
-from agents.basic_qlearning import BasicQLearningAgent
+from agents.basic_qlearning import BasicQLearningAgent, plot_comparison
 import json
 
 
@@ -120,7 +120,6 @@ def train_and_compare(env_config, agent_config_no_risk, agent_config_with_risk, 
         json.dump(env_config, f)
 
     agent_no_risk.plot_history()
-    agent_no_risk.plot_risk_map(env_no_risk, save_path=os.path.join(full_path_no_risk, "risk_map_no_risk.png"))
 
     # Entrenar agente con riesgo
     agent_params_with_risk = agent_config_with_risk.copy()
@@ -154,5 +153,5 @@ def train_and_compare(env_config, agent_config_no_risk, agent_config_with_risk, 
     agent_with_risk.plot_history()
     agent_with_risk.plot_risk_map(env_with_risk, save_path=os.path.join(full_path_with_risk, "risk_map_with_risk.png"))
 
-    # Comparar ambos agentes
-    agent_no_risk.plot_comparison(agent_no_risk, agent_with_risk)
+    # Comparar ambos agentes utilizando la función externa
+    plot_comparison(agent_no_risk, agent_with_risk)

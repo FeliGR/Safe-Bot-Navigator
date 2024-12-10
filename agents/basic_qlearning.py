@@ -32,7 +32,14 @@ class BasicQLearningAgent:
         self.n_actions = n_actions
         self.q_table = np.zeros((state_size, n_actions))
         self.q_risk = np.zeros((state_size, n_actions))
-        self.train_history = {}
+        self.train_history = {
+            "episodes": [],
+            "rewards": [],
+            "risk": [],
+            "steps": [],
+            "max_q": [],
+            "max_q_risk": [],
+        }
         self.greedy_history = {}
 
     def get_action(self, state):
@@ -303,48 +310,23 @@ class BasicQLearningAgent:
         plt.show()
         plt.close()
 
-    def plot_comparison(agent_no_risk, agent_with_risk):
-        """Genera gráficos comparativos entre dos agentes."""
-        metrics = ["rewards", "steps", "success"]
-        episodes = agent_no_risk.train_history["episodes"]
+# Definir plot_comparison fuera de la clase
+def plot_comparison(agent_no_risk, agent_with_risk):
+    """Genera gráficos comparativos entre dos agentes."""
+    metrics = ["rewards", "steps"]
+    episodes = agent_no_risk.train_history["episodes"]
 
-        plt.figure(figsize=(15, 5))
+    plt.figure(figsize=(18, 5))
 
-        for i, metric in enumerate(metrics, 1):
-            plt.subplot(1, 3, i)
-            plt.plot(episodes, agent_no_risk.train_history[metric], label="Sin Riesgo")
-            plt.plot(episodes, agent_with_risk.train_history[metric], label="Con Riesgo")
-            plt.title(f"Comparación de {metric.capitalize()}")
-            plt.xlabel("Episodios")
-            plt.ylabel(metric.capitalize())
-            plt.legend()
-            plt.grid(True)
+    for i, metric in enumerate(metrics, 1):
+        plt.subplot(1, 3, i)
+        plt.plot(episodes, agent_no_risk.train_history[metric], label="Sin Riesgo")
+        plt.plot(episodes, agent_with_risk.train_history[metric], label="Con Riesgo")
+        plt.title(f"Comparación de {metric.capitalize()}")
+        plt.xlabel("Episodios")
+        plt.ylabel(metric.capitalize())
+        plt.legend()
+        plt.grid(True)
 
-        plt.tight_layout()
-        plt.show()
-
-    def plot_metrics_comparison(agent_no_risk, agent_with_risk):
-        """Genera gráficos comparativos de las métricas entre dos agentes."""
-        import matplotlib.pyplot as plt
-
-        metrics = ["rewards", "risk", "collisions", "success", "steps"]
-        episodes = agent_no_risk.train_history["episodes"]
-
-        plt.figure(figsize=(20, 10))
-
-        for i, metric in enumerate(metrics, 1):
-            plt.subplot(2, 3, i)
-            if metric == "risk":
-                plt.plot(episodes, agent_no_risk.train_history.get(metric, [0]*len(episodes)), label="Sin Riesgo")
-                plt.plot(episodes, agent_with_risk.train_history.get(metric, [0]*len(episodes)), label="Con Riesgo")
-            else:
-                plt.plot(episodes, agent_no_risk.train_history.get(metric, [0]*len(episodes)), label="Sin Riesgo")
-                plt.plot(episodes, agent_with_risk.train_history.get(metric, [0]*len(episodes)), label="Con Riesgo")
-            plt.title(f"Comparación de {metric.capitalize()}")
-            plt.xlabel("Episodios")
-            plt.ylabel(metric.capitalize())
-            plt.legend()
-            plt.grid(True)
-
-        plt.tight_layout()
-        plt.show()
+    plt.tight_layout()
+    plt.show()
