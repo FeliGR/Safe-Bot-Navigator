@@ -3,6 +3,9 @@ import json
 import pickle
 import numpy as np
 import importlib
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def list_saved_agents(base_dir="trained_agents"):
@@ -126,7 +129,7 @@ def load_agent(agent_info):
 
 
 def run_greedy_evaluation(
-    agent_info, episodes=5, render_delay=0.5, render_mode="human"
+    agent_info, episodes=5, render_delay=0.5, render_mode="human", plot=True
 ):
     """
     Run a greedy evaluation of the selected agent in the environment.
@@ -159,15 +162,21 @@ def run_greedy_evaluation(
     print(f"Average Steps: {np.mean(history['steps']):.2f}")
     print(f"Success Rate: {np.mean(history['success']) * 100:.1f}%")
 
-    agent.plot_history(history_type=agent.GREEDY_HISTORY)
+    if plot:
+        agent.plot_history(history_type=agent.GREEDY_HISTORY)
     env.close()
+
+    path_to_agent = agent_info["path"]
+    print(f"\nAgent saved to: {path_to_agent}")
+    with open(os.path.join(path_to_agent, "agent.pkl"), "wb") as f:
+        pickle.dump(agent, f)
 
 
 if __name__ == "__main__":
 
     selected_agent = select_agent()
     if selected_agent:
-        render_mode = "human"
+        render_mode = None #"human"
         run_greedy_evaluation(
             selected_agent, episodes=50, render_delay=0.2, render_mode=render_mode
         )

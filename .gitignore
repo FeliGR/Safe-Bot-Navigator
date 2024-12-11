@@ -20,6 +20,7 @@ wheels/
 .installed.cfg
 *.egg
 *.pyc
+visualization/safe_results
 
 # Virtual Environment
 venv/
@@ -27,6 +28,7 @@ env/
 ENV/
 .env
 .venv
+
 
 # IDE
 .idea/

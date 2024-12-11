@@ -1,8 +1,12 @@
+
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from environment.environment import GridEnvironment
 from agents.planified import PlanifiedAgent
 import time
-
-
 def main():
     """
     Main function to run a continuous simulation of a planified agent in a grid environment.
@@ -25,8 +29,8 @@ def main():
         - 2-second pause between episodes
     """
     env = GridEnvironment(
-        size=8,
-        obstacle_prob=0.2,
+        size=15,
+        obstacle_prob=0,
         trap_prob=0.1,
         trap_danger=0.3,
     )
@@ -38,7 +42,7 @@ def main():
 
     try:
         while True:
-            reward, steps, success = agent.run_episode(
+            reward, steps, success, info = agent.run_episode(
                 env,
                 render=True,
                 render_delay=0.5,

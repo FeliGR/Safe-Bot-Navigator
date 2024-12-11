@@ -28,7 +28,7 @@ class PlanifiedAgent:
         """
         if self.current_plan is None or not self.current_plan:
 
-            self.current_plan = env.find_shortest_path(allow_traps=False)
+            self.current_plan = env.find_shortest_path(allow_traps=False, safety_distance=0)
 
             if self.current_plan is None:
                 self.current_plan = env.find_shortest_path(allow_traps=True)
@@ -63,7 +63,7 @@ class PlanifiedAgent:
                 time.sleep(render_delay)
 
             action = self.get_action(env)
-            _, reward, done = env.step(action)
+            _, reward, done, info = env.step(action)
 
             self.total_reward += reward
             self.steps_taken += 1

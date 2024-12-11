@@ -2,6 +2,7 @@ import numpy as np
 import time
 from agents.basic_qlearning import BasicQLearningAgent
 from agents.planified import PlanifiedAgent
+import random
 
 
 class QLearningAgentTeacher(BasicQLearningAgent):
@@ -45,6 +46,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
         interaction_type=UNIFORM,
         planner_probability=0.5,
         teacher_expertise=0.8,
+        teacher_safety=0
     ):
         """
         Initialize the QLearningAgentTeacher with given parameters.
@@ -78,6 +80,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
         self.interaction_type = interaction_type
         self.planner_probability = planner_probability
         self.teacher_expertise = teacher_expertise
+        self.teacher_safety = teacher_safety
 
     def train(
         self,
@@ -108,14 +111,22 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             "epsilon": [],
             "max_q": [],
             "steps": [],
+            "planifier_uses": [],
+            "collisions": [],
+            "trap_steps": [],  
+            "trap_activations": [],
             "episodes": list(range(episodes)),
         }
 
+        # Demonstration phase
         for episode in range(self.planified_episodes):
             state = env.reset()
             total_reward = 0
             steps = 0
-            done = False
+            planifier_uses = 0  
+            episode_collisions = 0
+            episode_trap_steps = 0
+            episode_trap_activations = 0
 
             print(f"\nPlanified Episode {episode + 1}/{self.planified_episodes}")
 
@@ -133,7 +144,12 @@ class QLearningAgentTeacher(BasicQLearningAgent):
                     time.sleep(render_delay)
 
                 action = planned_actions[steps]
-                next_state, reward, done = env.step(action)
+                planifier_uses += 1  
+                next_state, reward, done, info = env.step(action)
+
+                episode_collisions += int(info.get("collision", False))
+                episode_trap_steps += info.get("trap_step", 0)  
+                episode_trap_activations += int(info.get("trap_activation", False))
 
                 self.update(state, action, reward, next_state)
 
@@ -145,14 +161,23 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             history["epsilon"].append(self.epsilon)
             history["max_q"].append(np.max(self.q_table))
             history["steps"].append(steps)
+            history["planifier_uses"].append(planifier_uses)
+            history["collisions"].append(episode_collisions)
+            history["trap_steps"].append(episode_trap_steps)
+            history["trap_activations"].append(episode_trap_activations)
 
             print(f"Episode completed - Steps: {steps}, Reward: {total_reward:.2f}")
 
+        # Autonomous learning phase
         print("\nStarting autonomous learning phase...")
         for episode in range(self.planified_episodes, episodes):
             state = env.reset()
             total_reward = 0
             steps = 0
+            planifier_uses = 0  
+            episode_collisions = 0
+            episode_trap_steps = 0
+            episode_trap_activations = 0
             done = False
 
             while not done and steps < max_steps:
@@ -160,8 +185,16 @@ class QLearningAgentTeacher(BasicQLearningAgent):
                     env.render(mode=render_mode)
                     time.sleep(render_delay)
 
-                action = self.get_action(state, env)
-                next_state, reward, done = env.step(action)
+                action, used_planifier = self.get_action(state, env)
+                if used_planifier:
+                    planifier_uses += 1
+
+                next_state, reward, done, info = env.step(action)
+
+                episode_collisions += int(info.get("collision", False))
+                episode_trap_steps += info.get("trap_step", 0)  
+                episode_trap_activations += int(info.get("trap_activation", False))
+
                 self.update(state, action, reward, next_state)
 
                 state = next_state
@@ -172,12 +205,17 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             history["epsilon"].append(self.epsilon)
             history["max_q"].append(np.max(self.q_table))
             history["steps"].append(steps)
+            history["planifier_uses"].append(planifier_uses)
+            history["collisions"].append(episode_collisions)
+            history["trap_steps"].append(episode_trap_steps)
+            history["trap_activations"].append(episode_trap_activations)
 
             if episode % 100 == 0:
                 print(
                     f"Episode {episode}/{episodes}, Steps: {steps}, "
                     f"Reward: {total_reward:.2f}, Epsilon: {self.epsilon:.2f}, "
-                    f"Max Q-value: {np.max(self.q_table):.2f}"
+                    f"Max Q-value: {np.max(self.q_table):.2f}, "
+                    f"Planifier Uses: {planifier_uses}"
                 )
 
             self.decay_epsilon()
@@ -211,11 +249,11 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             int: The planned action to take.
         """
         if np.random.random() < self.teacher_expertise:
-            planned_actions = env.find_shortest_path(allow_traps=False)
+            planned_actions = env.find_shortest_path(allow_traps=False, safety_distance=self.teacher_safety)
             if planned_actions is not None:
                 return planned_actions[0]
 
-        planned_actions = env.find_shortest_path(allow_traps=True)
+        planned_actions = env.find_shortest_path(allow_traps=True, safety_distance=random.randint(0, self.teacher_safety))
         if planned_actions is None:
             return self.get_random_action()
         return planned_actions[0]
@@ -229,7 +267,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             env: The environment instance (required for stochastic interaction).
 
         Returns:
-            int: The action selected.
+            tuple: (action, used_planifier) where used_planifier is True if the action came from planifier
         """
         if env is None:
             raise ValueError("Environment must be provided for stochastic interaction")
@@ -240,17 +278,17 @@ class QLearningAgentTeacher(BasicQLearningAgent):
 
             if q_diff < self.q_threshold:
                 print("Using planifier (stochastic)...")
-                return self.get_planified_action(env)
+                return self.get_planified_action(env), True
 
         elif self.interaction_type == self.UNIFORM:
             if np.random.random() < self.planner_probability:
                 print("Using planifier (uniform)...")
-                return self.get_planified_action(env)
+                return self.get_planified_action(env), True
 
         if np.random.random() < self.epsilon:
-            return self.get_random_action()
+            return self.get_random_action(), False
 
         options = np.argwhere(
             self.q_table[state] == np.max(self.q_table[state])
         ).flatten()
-        return np.random.choice(options)
+        return np.random.choice(options), False

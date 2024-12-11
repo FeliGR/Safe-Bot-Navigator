@@ -95,22 +95,13 @@ class BasicQLearningAgent:
     def train(
         self,
         env,
-        episodes=10000,
+        episodes=1000,
         max_steps=1000,
-        render_freq=100,
         render_mode=None,
+        render_freq=100,
         render_delay=0.1,
     ):
-        """Train the agent using the Q-learning algorithm.
-
-        Args:
-            env: The environment to train the agent in.
-            episodes (int, optional): Number of training episodes.
-            max_steps (int, optional): Maximum steps per episode.
-            render_freq (int, optional): Frequency to render the environment.
-            render_mode (str, optional): Mode to render ('human' or None).
-            render_delay (float, optional): Delay between renders in seconds.
-        """
+        """Train the agent using Q-learning"""
         history = {
             "rewards": [],
             "epsilon": [],
@@ -118,49 +109,42 @@ class BasicQLearningAgent:
             "steps": [],
             "episodes": list(range(episodes)),
         }
-
+        
         for episode in range(episodes):
             state = env.reset()
             total_reward = 0
             steps = 0
             done = False
-
+            
             while not done and steps < max_steps:
                 if render_mode and episode % render_freq == 0:
                     env.render(mode=render_mode)
                     time.sleep(render_delay)
-
+                
                 action = self.get_action(state)
-                next_state, reward, done = env.step(action)
-
+                next_state, reward, done, info = env.step(action)  # Update to unpack 4 values
+                
                 self.update(state, action, reward, next_state)
-
+                
                 state = next_state
                 total_reward += reward
                 steps += 1
-
-            if render_mode and episode % render_freq == 0:
-                env.render(mode=render_mode)
-                time.sleep(render_delay)
-
+            
             history["rewards"].append(total_reward)
             history["epsilon"].append(self.epsilon)
             history["max_q"].append(np.max(self.q_table))
             history["steps"].append(steps)
-
+            
             if episode % 100 == 0:
                 print(
-                    f"Episode {episode}/{episodes}, Steps: {steps}, "
-                    f"Reward: {total_reward:.2f}, Epsilon: {self.epsilon:.2f}, "
-                    f"Max Q-value: {np.max(self.q_table):.2f}"
+                    f"Episode {episode}/{episodes}, "
+                    f"Reward: {total_reward:.2f}, "
+                    f"Epsilon: {self.epsilon:.2f}"
                 )
-
+            
             self.decay_epsilon()
-
-        if render_mode:
-            env.close()
-
-        self.train_history = history
+        
+        return history
 
     def run_greedy(
         self, env, episodes=1, max_steps=1000, render_mode="human", render_delay=0.1
@@ -192,8 +176,12 @@ class BasicQLearningAgent:
                     env.render(mode=render_mode)
                     time.sleep(render_delay)
 
-                action = np.argmax(self.q_table[state])
-                next_state, reward, done = env.step(action)
+                # action = np.argmax(self.q_table[state])
+                options = np.argwhere(
+                    self.q_table[state] == np.max(self.q_table[state])
+                ).flatten()
+                action = np.random.choice(options)
+                next_state, reward, done, info = env.step(action)
 
                 state = next_state
                 total_reward += reward

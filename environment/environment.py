@@ -207,6 +207,8 @@ class GridEnvironment:
         elif action == self.MOVE_UP:
             self.robot_pos[0] -= 1
 
+        info = {"collision": False, "trap_step": 0, "trap_activation": False}
+
         if 0 <= self.robot_pos[0] < self.size and 0 <= self.robot_pos[1] < self.size:
             cell_type = self.grid[self.robot_pos[0], self.robot_pos[1]]
 
@@ -217,35 +219,41 @@ class GridEnvironment:
                 self.text_start_time = time.time()
                 self.text_color = self.RED
                 self._wait_for_message()
+                info["collision"] = True
                 return (
                     self._pos_to_state(tuple(self.robot_pos)),
                     self.rewards["collision"],
                     True,
+                    info
                 )
             elif cell_type == self.TRAP:
+                info["trap_step"] += 1
                 if np.random.random() < self.trap_danger:
                     self.show_text = True
                     self.text_message = "FAIL - Trap!"
                     self.text_start_time = time.time()
                     self.text_color = self.RED
                     self._wait_for_message()
+                    info["trap_activation"] = True
                     return (
                         self._pos_to_state(tuple(self.robot_pos)),
                         self.rewards["trap"],
                         True,
+                        info
                     )
         else:
-
             self.robot_pos = original_pos
             self.show_text = True
             self.text_message = "FAIL - Wall!"
             self.text_start_time = time.time()
             self.text_color = self.RED
             self._wait_for_message()
+            info["collision"] = True
             return (
                 self._pos_to_state(tuple(self.robot_pos)),
                 self.rewards["collision"],
                 True,
+                info
             )
 
         done = tuple(self.robot_pos) == tuple(self.target_pos)
@@ -258,14 +266,16 @@ class GridEnvironment:
             self.text_color = self.GREEN
             self._wait_for_message()
 
-        return self._pos_to_state(tuple(self.robot_pos)), reward, done
+        return self._pos_to_state(tuple(self.robot_pos)), reward, done, info
 
-    def find_shortest_path(self, allow_traps=False):
+    def find_shortest_path(self, allow_traps=False, safety_distance=0):
         """Find the shortest path from current position to target.
 
         Args:
             allow_traps (bool): If True, allows passing through traps but tries to avoid them
                               If False, treats traps as obstacles
+            safety_distance (int): Minimum desired distance from obstacles and traps.
+                                 0 means no safety distance is enforced.
 
         Returns:
             list: Sequence of actions to reach target, or None if no path exists
@@ -273,6 +283,19 @@ class GridEnvironment:
 
         def manhattan_distance(pos1, pos2):
             return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+        def get_min_distance_to_hazards(pos):
+            min_dist = float('inf')
+            hazard_count = 0
+            for i in range(self.size):
+                for j in range(self.size):
+                    cell_type = self.grid[i, j]
+                    if cell_type == self.OBSTACLE or (not allow_traps and cell_type == self.TRAP):
+                        dist = manhattan_distance(pos, (i, j))
+                        if dist <= safety_distance:
+                            hazard_count += 1
+                        min_dist = min(min_dist, dist)
+            return min_dist, hazard_count
 
         def get_neighbors(pos):
             neighbors = []
@@ -298,10 +321,20 @@ class GridEnvironment:
             return neighbors
 
         def get_cost(current, next_pos):
-
+            base_cost = 1
             if allow_traps and self.grid[next_pos[0], next_pos[1]] == self.TRAP:
-                return 10
-            return 1
+                base_cost = 10
+
+            if safety_distance > 0:
+                min_dist, hazard_count = get_min_distance_to_hazards(next_pos)
+                if min_dist < safety_distance:
+                    # Add penalty for being closer than safety_distance
+                    safety_penalty = (safety_distance - min_dist) * 5
+                    # Add additional penalty based on number of nearby hazards
+                    hazard_penalty = hazard_count * 2
+                    base_cost += safety_penalty + hazard_penalty
+
+            return base_cost
 
         start = tuple(self.robot_pos)
         goal = tuple(self.target_pos)
