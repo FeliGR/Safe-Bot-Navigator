@@ -38,6 +38,7 @@ class BasicQLearningAgent:
             "rewards": [],
             "risk": [],
             "steps": [],
+            "errors": [],
             "max_q": [],
             "max_q_risk": [],
         }
@@ -91,6 +92,7 @@ class BasicQLearningAgent:
             "max_q": [],
             "max_q_risk": [],
             "steps": [],
+            "errors": [],
             "episodes": list(range(episodes)),
         }
 
@@ -98,6 +100,7 @@ class BasicQLearningAgent:
             state = env.reset()
             total_reward = 0
             total_risk = 0
+            total_errors = 0
             steps = 0
             done = False
 
@@ -108,6 +111,9 @@ class BasicQLearningAgent:
 
                 action = self.get_action(state)
                 next_state, reward, done, is_error = env.step(action)
+
+                if is_error:
+                    total_errors += 1
 
                 risk_reward = 1 if is_error else 0
                 self.update(state, action, reward, next_state, risk_reward)
@@ -126,11 +132,13 @@ class BasicQLearningAgent:
             history["max_q"].append(np.max(self.q_table))
             history["max_q_risk"].append(np.max(self.q_risk))
             history["steps"].append(steps)
+            history["errors"].append(total_errors)
 
             if episode % 100 == 0:
                 print(
                     f"Episode {episode}/{episodes}, Steps: {steps}, "
                     f"Reward: {total_reward:.2f}, Risk: {total_risk}, "
+                    f"Errors: {total_errors}, "
                     f"Epsilon: {self.epsilon:.2f}, Max Q: {np.max(self.q_table):.2f}, "
                     f"Max Q_risk: {np.max(self.q_risk):.2f}"
                 )
@@ -161,12 +169,14 @@ class BasicQLearningAgent:
             "rewards": [],
             "steps": [],
             "success": [],
+            "errors": [],
             "episodes": list(range(episodes)),
         }
 
         for episode in range(episodes):
             state = env.reset()
             total_reward = 0
+            total_errors = 0
             steps = 0
             done = False
 
@@ -183,9 +193,12 @@ class BasicQLearningAgent:
 
                 if is_error:
                     history["success"].append(True)
+                    history["errors"].append(1)
                     done = True
+                    total_errors += 1
                 else:
                     history["success"].append(done)
+                    history["errors"].append(0)
 
                 steps += 1
 
@@ -195,6 +208,7 @@ class BasicQLearningAgent:
 
             history["rewards"].append(total_reward)
             history["steps"].append(steps)
+            history["errors"].append(total_errors)
 
             if episode % 10 == 0:
                 success_rate = sum(history["success"][-10:]) / min(10, episode + 1)
@@ -312,14 +326,8 @@ class BasicQLearningAgent:
         plt.close()
 
 def plot_comparison(agent_no_risk, agent_with_risk, window=100):
-    """Genera gráficos comparativos entre dos agentes con suavizado en rewards.
-    
-    Args:
-        agent_no_risk: Agente sin sensibilidad al riesgo.
-        agent_with_risk: Agente con sensibilidad al riesgo.
-        window: Tamaño de la ventana para la media móvil.
-    """
-    metrics = ["rewards", "steps"]
+    """Genera gráficos comparativos entre dos agentes con suavizado en rewards y errores."""
+    metrics = ["rewards", "steps", "errors"]
     episodes = agent_no_risk.train_history["episodes"]
 
     plt.figure(figsize=(18, 5))
@@ -341,6 +349,21 @@ def plot_comparison(agent_no_risk, agent_with_risk, window=100):
             # Opcional: También puedes mostrar las recompensas originales con transparencia
             plt.plot(episodes, rewards_no_risk, color='blue', alpha=0.1)
             plt.plot(episodes, rewards_with_risk, color='orange', alpha=0.1)
+        elif metric == "errors":
+            # Gráfico de errores
+            errors_no_risk = pd.Series(agent_no_risk.train_history[metric])
+            errors_with_risk = pd.Series(agent_with_risk.train_history[metric])
+
+            # Media móvil
+            errors_no_risk_smooth = errors_no_risk.rolling(window=window).mean()
+            errors_with_risk_smooth = errors_with_risk.rolling(window=window).mean()
+
+            plt.plot(episodes, errors_no_risk_smooth, label="Sin Riesgo (Suavizado)", color='blue')
+            plt.plot(episodes, errors_with_risk_smooth, label="Con Riesgo (Suavizado)", color='orange')
+
+            # Opcional: Mostrar errores originales con transparencia
+            plt.plot(episodes, errors_no_risk, color='blue', alpha=0.1)
+            plt.plot(episodes, errors_with_risk, color='orange', alpha=0.1)
         else:
             plt.plot(episodes, agent_no_risk.train_history[metric], label="Sin Riesgo")
             plt.plot(episodes, agent_with_risk.train_history[metric], label="Con Riesgo")

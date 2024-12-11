@@ -11,7 +11,7 @@ env_config = {
     "obstacle_prob": 0.2,
     "trap_prob": 0.2,
     "trap_danger": 0.3,
-    "rewards": {"target": 1, "collision": 0, "step": 0, "trap": 0},
+    "rewards": {"target": 1, "collision": 0, "step": -0.001, "trap": -0.1},
 }
 
 # Configuración del entrenamiento
@@ -45,7 +45,7 @@ agent_config_with_risk = {
     "epsilon": 1.0,
     "epsilon_min": 0.01,
     "epsilon_decay": 0.000099,  # Ajusta según corresponda
-    "xi": 1.0,  # Con sensibilidad al riesgo
+    "xi": 5,  # Con sensibilidad al riesgo
     "state_size": env_config["size"] ** 2,
     "n_actions": 4,  # Asumiendo 4 acciones
 }
@@ -128,4 +128,9 @@ unique_grid = generate_unique_grid(env_config)
 env_config["grid"] = unique_grid
 
 # Iniciar el entrenamiento comparativo
-train_and_compare(env_config, agent_config_no_risk, agent_config_with_risk, train_config)
+def main():
+    os.makedirs("trained_agents", exist_ok=True)  # Asegurarse de que el directorio existe
+    train_and_compare(env_config, agent_config_no_risk, agent_config_with_risk, train_config)
+
+if __name__ == "__main__":
+    main()

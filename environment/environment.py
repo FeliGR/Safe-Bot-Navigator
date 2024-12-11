@@ -17,7 +17,7 @@ class GridEnvironment:
     TRAP = 3
 
     def __init__(
-        self, size=20, obstacle_prob=0.2, trap_prob=0.05, trap_danger=0.3, rewards=None, grid=None
+        self, size=10, obstacle_prob=0.2, trap_prob=0.3, trap_danger=1, rewards=None, grid=None
     ):
         """Initialize environment
 
@@ -245,6 +245,20 @@ class GridEnvironment:
                         self._pos_to_state(tuple(self.robot_pos)),
                         self.rewards["trap"],
                         True,
+                        is_error,
+                    )
+                else:
+                    # Agente sobrevive a la trampa
+                    self.show_text = True
+                    self.text_message = "Trap passed safely."
+                    self.text_start_time = time.time()
+                    self.text_color = self.GREEN
+                    self._wait_for_message()
+                    is_error = False
+                    return (
+                        self._pos_to_state(tuple(self.robot_pos)),
+                        self.rewards["step"],  # Recompensa por paso
+                        False,
                         is_error,
                     )
         else:
