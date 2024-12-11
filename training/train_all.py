@@ -1,8 +1,7 @@
-"""Train a specific agent configuration."""
+"""Train all agent configurations."""
 
 import os
 import sys
-import argparse
 import importlib
 import pickle
 import json
@@ -14,7 +13,7 @@ sys.path.append(PROJECT_ROOT)
 
 from environment.environment import GridEnvironment
 
-def list_available_configs():
+def list_configs():
     """List all available configuration files in the config directory."""
     config_dir = os.path.join(os.path.dirname(__file__), 'config')
     config_files = []
@@ -116,51 +115,30 @@ def train_agent(config):
     if hasattr(agent, 'plot_history'):
         agent.plot_history()
 
-def select_config():
-    """
-    Interactively select a configuration from available options.
-    
-    Returns:
-        str: Selected configuration name
-    """
-    configs = list_available_configs()
+def main():
+    configs = list_configs()
     
     if not configs:
         print("No configurations found in config directory")
         sys.exit(1)
     
-    print("\nAvailable configurations:")
-    for i, config in enumerate(configs, 1):
-        print(f"{i}. {config}")
+    print(f"\nFound {len(configs)} configurations to train:")
+    for config_name in configs:
+        print(f"  - {config_name}")
     
-    while True:
+    for i, config_name in enumerate(configs, 1):
+        print(f"\n[{i}/{len(configs)}] Training {config_name}")
+        print("=" * 50)
+        
         try:
-            choice = input("\nSelect a configuration (enter number): ")
-            idx = int(choice) - 1
-            if 0 <= idx < len(configs):
-                return configs[idx]
-            print("Invalid selection. Please try again.")
-        except ValueError:
-            print("Please enter a valid number.")
-
-def main():
-    parser = argparse.ArgumentParser(description='Train an agent using a specific configuration')
-    parser.add_argument('--config', type=str,
-                      help='Name of the configuration to use (without .py extension)')
-    
-    args = parser.parse_args()
-    
-    try:
-        config_name = args.config if args.config else select_config()
-        print(f"\nLoading configuration: {config_name}")
-        config = load_config(config_name)
-        train_agent(config)
-    except KeyboardInterrupt:
-        print("\nTraining cancelled by user")
-        sys.exit(0)
-    except Exception as e:
-        print(f"Error during training: {str(e)}")
-        sys.exit(1)
+            config = load_config(config_name)
+            train_agent(config)
+        except KeyboardInterrupt:
+            print("\nTraining cancelled by user")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Error training {config_name}: {str(e)}")
+            continue
 
 if __name__ == "__main__":
     main()

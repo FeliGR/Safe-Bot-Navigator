@@ -1,3 +1,5 @@
+"""Visualize all trained agents' results."""
+
 import os
 import sys
 import argparse
@@ -7,7 +9,7 @@ import glob
 # Add project root to Python path
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TRAINED_AGENTS_DIR = os.path.join(os.path.dirname(PROJECT_ROOT), 'trained_agents')
-VISUALIZATION_DIR = os.path.dirname(os.path.abspath(__file__))
+SAFE_RESULTS_DIR = os.path.join(os.path.dirname(PROJECT_ROOT), 'safe_results')
 sys.path.append(PROJECT_ROOT)
 
 from environment.environment import GridEnvironment
@@ -43,7 +45,7 @@ def find_related_files(agent_dir):
 def create_visualization_directory(agent_name):
     """Create a directory for storing visualizations."""
     # Use exact agent name for the visualization directory
-    vis_dir = os.path.join(VISUALIZATION_DIR, 'safe_results', agent_name)
+    vis_dir = os.path.join(SAFE_RESULTS_DIR, agent_name)
     os.makedirs(vis_dir, exist_ok=True)
     return vis_dir
 
@@ -180,7 +182,7 @@ def process_all_agents(base_dir=None):
         base_dir = TRAINED_AGENTS_DIR
     
     print(f"Searching for trained agents in: {base_dir}")
-    print(f"Results will be saved in: {os.path.join(VISUALIZATION_DIR, 'safe_results')}\n")
+    print(f"Results will be saved in: {SAFE_RESULTS_DIR}\n")
     
     # Find all agent directories
     agent_dirs = []
