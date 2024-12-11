@@ -152,7 +152,7 @@ def visualize_agent_results(agent_dir, base_dir=None):
         print("Generating policy visualization...")
         try:
             env = load_pickle(files['env'])
-            policy_path = os.path.join(vis_dir, 'policy.png')
+            policy_path = os.path.join(vis_dir, 'policy')
             create_policy_visualization(agent, env, agent_name, policy_path)
             print("Policy visualization generated successfully")
         except Exception as e:

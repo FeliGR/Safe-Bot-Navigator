@@ -124,6 +124,40 @@ def create_policy_visualization(agent, env, run_name, save_path=None):
                             fc=arrow_color, ec=arrow_color,
                             length_includes_head=True)
     
+    if save_path:
+        # Ensure the directory exists
+        os.makedirs(save_path, exist_ok=True)
+
+        # Save the first image with only arrows
+        policy_image_path = os.path.join(save_path, f"policy.png")
+        plt.savefig(policy_image_path, bbox_inches='tight', dpi=300, format='png')
+
+        # Add text annotations for each action and Q value
+        for i in range(size):
+            for j in range(size):
+                cell_type = grid[i, j]
+                if cell_type != GridEnvironment.OBSTACLE and cell_type != GridEnvironment.TARGET:
+                    state = i * size + j
+                    q_values = agent.q_table[state]
+                    for action, q_value in enumerate(q_values):
+                        action_name = ''
+                        if action == GridEnvironment.MOVE_UP:
+                            action_name = 'Up'
+                        elif action == GridEnvironment.MOVE_DOWN:
+                            action_name = 'Down'
+                        elif action == GridEnvironment.MOVE_LEFT:
+                            action_name = 'Left'
+                        elif action == GridEnvironment.MOVE_RIGHT:
+                            action_name = 'Right'
+                        
+                        # Position the text slightly above the arrows
+                        ax.text(j + padding + 0.5, size-1-i + padding + 0.3 + 0.1 * action, f'{action_name}: {q_value:.2f}',
+                                fontsize=8, ha='center', va='center', color='black')
+
+        # Save the second image with action names and Q values
+        q_value_image_path = os.path.join(save_path, f"policy_with_q.png")
+        plt.savefig(q_value_image_path, bbox_inches='tight', dpi=300, format='png')
+        
     # Set grid properties with padding
     ax.set_xlim(-0.5 + padding, size + 0.5 + padding)
     ax.set_ylim(-0.5 + padding, size + 0.5 + padding)
@@ -150,11 +184,7 @@ def create_policy_visualization(agent, env, run_name, save_path=None):
     plt.tight_layout()
     
     if save_path:
-        # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        # Save with high DPI and tight layout
-        plt.savefig(save_path, bbox_inches='tight', dpi=300, format='png')
-        plt.close()
+        plt.close(fig)
     else:
         plt.show()
 
@@ -177,7 +207,7 @@ def process_run_directory(run_dir):
     os.makedirs(vis_dir, exist_ok=True)
     
     # Create and save visualization
-    save_path = os.path.join(vis_dir, f"{run_name}_policy.png")
+    save_path = os.path.join(vis_dir, run_name)
     create_policy_visualization(agent, env, run_name, save_path)
     
     return save_path
