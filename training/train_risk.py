@@ -50,6 +50,7 @@ agent_config_with_risk = {
     "n_actions": 4,  # Asumiendo 4 acciones
 }
 
+
 # Generar una cuadrícula única
 def generate_unique_grid(config):
     """Genera una cuadrícula única basada en la configuración proporcionada."""
@@ -96,6 +97,7 @@ def generate_unique_grid(config):
 
     return grid
 
+
 def _has_adjacent_obstacle_static(grid, pos, size):
     """Check si una posición tiene obstáculos adyacentes en una cuadrícula estática."""
     i, j = pos
@@ -104,9 +106,14 @@ def _has_adjacent_obstacle_static(grid, pos, size):
             if di == 0 and dj == 0:
                 continue
             ni, nj = i + di, j + dj
-            if 0 <= ni < size and 0 <= nj < size and grid[ni, nj] == GridEnvironment.OBSTACLE:
+            if (
+                0 <= ni < size
+                and 0 <= nj < size
+                and grid[ni, nj] == GridEnvironment.OBSTACLE
+            ):
                 return True
     return False
+
 
 def _has_nearby_trap_static(grid, pos, size, range_size=2):
     """Check si una posición tiene trampas cercanas en una cuadrícula estática."""
@@ -114,9 +121,14 @@ def _has_nearby_trap_static(grid, pos, size, range_size=2):
     for di in range(-range_size + 1, range_size):
         for dj in range(-range_size + 1, range_size):
             ni, nj = i + di, j + dj
-            if 0 <= ni < size and 0 <= nj < size and grid[ni, nj] == GridEnvironment.TRAP:
+            if (
+                0 <= ni < size
+                and 0 <= nj < size
+                and grid[ni, nj] == GridEnvironment.TRAP
+            ):
                 return True
     return False
+
 
 # Generar la cuadrícula única
 unique_grid = generate_unique_grid(env_config)
@@ -127,10 +139,16 @@ unique_grid = generate_unique_grid(env_config)
 # Actualizar la configuración del entorno para incluir la cuadrícula
 env_config["grid"] = unique_grid
 
+
 # Iniciar el entrenamiento comparativo
 def main():
-    os.makedirs("trained_agents", exist_ok=True)  # Asegurarse de que el directorio existe
-    train_and_compare(env_config, agent_config_no_risk, agent_config_with_risk, train_config)
+    os.makedirs(
+        "trained_agents", exist_ok=True
+    )  # Asegurarse de que el directorio existe
+    train_and_compare(
+        env_config, agent_config_no_risk, agent_config_with_risk, train_config
+    )
+
 
 if __name__ == "__main__":
     main()
