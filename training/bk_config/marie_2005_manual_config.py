@@ -6,12 +6,7 @@ env_config = {
     "obstacle_prob": 0.2,
     "trap_prob": 0.1,
     "trap_danger": 0.3,
-    "rewards": {
-        "target": 1,
-        "collision": -0.1,
-        "step": -0.01,
-        "trap": -0.2
-    }
+    "rewards": {"target": 1, "collision": -0.1, "step": -0.01, "trap": -0.2},
 }
 
 # Agent configuration
@@ -22,7 +17,7 @@ agent_config = {
     "gamma": 0.99,
     "epsilon": 1.0,
     "epsilon_min": 0.01,
-    "manual_episodes": 15
+    "manual_episodes": 15,
 }
 
 # Training configuration
@@ -31,5 +26,5 @@ train_config = {
     "max_steps": 100,
     "render_freq": 1,
     "render_mode": "human",
-    "render_delay": 0.2
+    "render_delay": 0.2,
 }

@@ -46,7 +46,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
         interaction_type=UNIFORM,
         planner_probability=0.5,
         teacher_expertise=0.8,
-        teacher_safety=0
+        teacher_safety=0,
     ):
         """
         Initialize the QLearningAgentTeacher with given parameters.
@@ -113,7 +113,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             "steps": [],
             "planifier_uses": [],
             "collisions": [],
-            "trap_steps": [],  
+            "trap_steps": [],
             "trap_activations": [],
             "episodes": list(range(episodes)),
         }
@@ -123,7 +123,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             state = env.reset()
             total_reward = 0
             steps = 0
-            planifier_uses = 0  
+            planifier_uses = 0
             episode_collisions = 0
             episode_trap_steps = 0
             episode_trap_activations = 0
@@ -144,11 +144,11 @@ class QLearningAgentTeacher(BasicQLearningAgent):
                     time.sleep(render_delay)
 
                 action = planned_actions[steps]
-                planifier_uses += 1  
+                planifier_uses += 1
                 next_state, reward, done, info = env.step(action)
 
                 episode_collisions += int(info.get("collision", False))
-                episode_trap_steps += info.get("trap_step", 0)  
+                episode_trap_steps += info.get("trap_step", 0)
                 episode_trap_activations += int(info.get("trap_activation", False))
 
                 self.update(state, action, reward, next_state)
@@ -174,7 +174,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             state = env.reset()
             total_reward = 0
             steps = 0
-            planifier_uses = 0  
+            planifier_uses = 0
             episode_collisions = 0
             episode_trap_steps = 0
             episode_trap_activations = 0
@@ -192,7 +192,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
                 next_state, reward, done, info = env.step(action)
 
                 episode_collisions += int(info.get("collision", False))
-                episode_trap_steps += info.get("trap_step", 0)  
+                episode_trap_steps += info.get("trap_step", 0)
                 episode_trap_activations += int(info.get("trap_activation", False))
 
                 self.update(state, action, reward, next_state)
@@ -249,11 +249,15 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             int: The planned action to take.
         """
         if np.random.random() < self.teacher_expertise:
-            planned_actions = env.find_shortest_path(allow_traps=False, safety_distance=self.teacher_safety)
+            planned_actions = env.find_shortest_path(
+                allow_traps=False, safety_distance=self.teacher_safety
+            )
             if planned_actions is not None:
                 return planned_actions[0]
 
-        planned_actions = env.find_shortest_path(allow_traps=True, safety_distance=random.randint(0, self.teacher_safety))
+        planned_actions = env.find_shortest_path(
+            allow_traps=True, safety_distance=random.randint(0, self.teacher_safety)
+        )
         if planned_actions is None:
             return self.get_random_action()
         return planned_actions[0]

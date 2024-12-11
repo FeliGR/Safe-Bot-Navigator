@@ -28,7 +28,9 @@ class PlanifiedAgent:
         """
         if self.current_plan is None or not self.current_plan:
 
-            self.current_plan = env.find_shortest_path(allow_traps=False, safety_distance=0)
+            self.current_plan = env.find_shortest_path(
+                allow_traps=False, safety_distance=0
+            )
 
             if self.current_plan is None:
                 self.current_plan = env.find_shortest_path(allow_traps=True)

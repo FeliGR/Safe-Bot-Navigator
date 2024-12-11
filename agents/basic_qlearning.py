@@ -109,41 +109,43 @@ class BasicQLearningAgent:
             "steps": [],
             "episodes": list(range(episodes)),
         }
-        
+
         for episode in range(episodes):
             state = env.reset()
             total_reward = 0
             steps = 0
             done = False
-            
+
             while not done and steps < max_steps:
                 if render_mode and episode % render_freq == 0:
                     env.render(mode=render_mode)
                     time.sleep(render_delay)
-                
+
                 action = self.get_action(state)
-                next_state, reward, done, info = env.step(action)  # Update to unpack 4 values
-                
+                next_state, reward, done, info = env.step(
+                    action
+                )  # Update to unpack 4 values
+
                 self.update(state, action, reward, next_state)
-                
+
                 state = next_state
                 total_reward += reward
                 steps += 1
-            
+
             history["rewards"].append(total_reward)
             history["epsilon"].append(self.epsilon)
             history["max_q"].append(np.max(self.q_table))
             history["steps"].append(steps)
-            
+
             if episode % 100 == 0:
                 print(
                     f"Episode {episode}/{episodes}, "
                     f"Reward: {total_reward:.2f}, "
                     f"Epsilon: {self.epsilon:.2f}"
                 )
-            
+
             self.decay_epsilon()
-        
+
         return history
 
     def run_greedy(
