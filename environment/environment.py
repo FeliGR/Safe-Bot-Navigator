@@ -224,7 +224,7 @@ class GridEnvironment:
                     self._pos_to_state(tuple(self.robot_pos)),
                     self.rewards["collision"],
                     True,
-                    info
+                    info,
                 )
             elif cell_type == self.TRAP:
                 info["trap_step"] += 1
@@ -239,7 +239,7 @@ class GridEnvironment:
                         self._pos_to_state(tuple(self.robot_pos)),
                         self.rewards["trap"],
                         True,
-                        info
+                        info,
                     )
         else:
             self.robot_pos = original_pos
@@ -253,7 +253,7 @@ class GridEnvironment:
                 self._pos_to_state(tuple(self.robot_pos)),
                 self.rewards["collision"],
                 True,
-                info
+                info,
             )
 
         done = tuple(self.robot_pos) == tuple(self.target_pos)
@@ -285,12 +285,14 @@ class GridEnvironment:
             return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
         def get_min_distance_to_hazards(pos):
-            min_dist = float('inf')
+            min_dist = float("inf")
             hazard_count = 0
             for i in range(self.size):
                 for j in range(self.size):
                     cell_type = self.grid[i, j]
-                    if cell_type == self.OBSTACLE or (not allow_traps and cell_type == self.TRAP):
+                    if cell_type == self.OBSTACLE or (
+                        not allow_traps and cell_type == self.TRAP
+                    ):
                         dist = manhattan_distance(pos, (i, j))
                         if dist <= safety_distance:
                             hazard_count += 1

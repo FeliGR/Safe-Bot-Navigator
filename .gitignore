@@ -41,7 +41,7 @@ ENV/
 
 # Project specific
 trained_agents/
-
+safe_results/
 # Jupyter Notebook
 .ipynb_checkpoints
 

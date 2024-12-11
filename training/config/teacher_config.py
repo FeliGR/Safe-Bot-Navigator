@@ -6,12 +6,7 @@ env_config = {
     "obstacle_prob": 0.2,
     "trap_prob": 0.1,
     "trap_danger": 0.3,
-    "rewards": {
-        "target": 1,
-        "collision": 0,
-        "step": 0,
-        "trap": 0
-    }
+    "rewards": {"target": 1, "collision": 0, "step": 0, "trap": 0},
 }
 
 # Agent configuration
@@ -26,7 +21,7 @@ agent_config = {
     "q_threshold": 0.2,
     "interaction_type": "stochastic",
     "planner_probability": 0.2,
-    "teacher_expertise": 1
+    "teacher_expertise": 1,
 }
 
 # Training configuration
@@ -35,5 +30,5 @@ train_config = {
     "max_steps": 100,
     "render_freq": 1,
     "render_mode": None,
-    "render_delay": 0.2
+    "render_delay": 0.2,
 }
