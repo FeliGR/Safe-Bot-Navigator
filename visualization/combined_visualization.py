@@ -13,7 +13,13 @@ TRAINED_AGENTS_DIR = os.path.join(PROJECT_ROOT, "trained_agents")
 SAFE_RESULTS_DIR = os.path.join(PROJECT_ROOT, "safe_results")
 sys.path.append(PROJECT_ROOT)
 
-from visualization.visualize_all import find_trained_agents, find_related_files, load_pickle, load_json
+from visualization.visualize_all import (
+    find_trained_agents,
+    find_related_files,
+    load_pickle,
+    load_json,
+)
+
 
 def list_available_agents(base_dir: str = TRAINED_AGENTS_DIR) -> List[str]:
     """List all available trained agents."""
@@ -23,11 +29,14 @@ def list_available_agents(base_dir: str = TRAINED_AGENTS_DIR) -> List[str]:
         print(f"{idx}. {agent}")
     return agents
 
+
 def select_agents() -> List[str]:
     """Allow user to select multiple agents for comparison."""
     agents = list_available_agents()
-    
-    print("\nSelect agents to compare (enter numbers separated by spaces, e.g., '1 3 4'):")
+
+    print(
+        "\nSelect agents to compare (enter numbers separated by spaces, e.g., '1 3 4'):"
+    )
     while True:
         try:
             selections = input("> ").strip().split()
@@ -37,18 +46,20 @@ def select_agents() -> List[str]:
         except (ValueError, IndexError):
             print("Invalid selection. Please enter valid numbers separated by spaces.")
 
+
 def load_agent_history(agent_name: str, base_dir: str = TRAINED_AGENTS_DIR):
     """Load history data from agent's pickle file."""
     agent_dir = os.path.join(base_dir, agent_name)
     agent_file = os.path.join(agent_dir, "agent.pkl")
-    
+
     if os.path.exists(agent_file):
         agent = load_pickle(agent_file)
-        if hasattr(agent, 'history'):
+        if hasattr(agent, "history"):
             return agent.history
-        elif hasattr(agent, 'train_history'):
+        elif hasattr(agent, "train_history"):
             return agent.train_history
     return None
+
 
 def create_combined_graphs(agent_histories: Dict[str, dict], output_dir: str):
     """Create combined graphs for all metrics, both episode and cumulative."""
@@ -74,10 +85,10 @@ def create_combined_graphs(agent_histories: Dict[str, dict], output_dir: str):
     for metric in all_metrics:
         # Episode-by-episode plot
         plt.figure(figsize=(12, 6))
-        
+
         for agent_name, history in agent_histories.items():
             values = []
-            
+
             # Handle list of dictionaries format
             if isinstance(history, list):
                 values = [episode.get(metric, 0) for episode in history]
@@ -93,21 +104,21 @@ def create_combined_graphs(agent_histories: Dict[str, dict], output_dir: str):
                 plt.plot(episodes, values, label=agent_name, linewidth=2)
 
         plt.title(f'Episode {metric.replace("_", " ").title()}')
-        plt.xlabel('Episode')
-        plt.ylabel(metric.replace('_', ' ').title())
+        plt.xlabel("Episode")
+        plt.ylabel(metric.replace("_", " ").title())
         plt.grid(True, alpha=0.3)
         plt.legend()
-        
+
         # Save the episode plot
-        plt.savefig(os.path.join(output_dir, f'episode_{metric}.png'))
+        plt.savefig(os.path.join(output_dir, f"episode_{metric}.png"))
         plt.close()
 
         # Cumulative plot
         plt.figure(figsize=(12, 6))
-        
+
         for agent_name, history in agent_histories.items():
             values = []
-            
+
             # Handle list of dictionaries format
             if isinstance(history, list):
                 values = [episode.get(metric, 0) for episode in history]
@@ -125,19 +136,20 @@ def create_combined_graphs(agent_histories: Dict[str, dict], output_dir: str):
                 plt.plot(episodes, cumulative_values, label=agent_name, linewidth=2)
 
         plt.title(f'Cumulative {metric.replace("_", " ").title()}')
-        plt.xlabel('Episode')
+        plt.xlabel("Episode")
         plt.ylabel(f'Cumulative {metric.replace("_", " ").title()}')
         plt.grid(True, alpha=0.3)
         plt.legend()
-        
+
         # Save the cumulative plot
-        plt.savefig(os.path.join(output_dir, f'cumulative_{metric}.png'))
+        plt.savefig(os.path.join(output_dir, f"cumulative_{metric}.png"))
         plt.close()
+
 
 def main():
     """Main function to run the combined visualization."""
     print("Welcome to Combined Agent Visualization!")
-    
+
     # Let user select agents
     selected_agents = select_agents()
     print(f"\nSelected agents: {', '.join(selected_agents)}")
@@ -157,11 +169,12 @@ def main():
 
     # Create output directory for combined visualizations
     output_dir = os.path.join(SAFE_RESULTS_DIR, "combined_visualization")
-    
+
     # Generate combined visualizations
     print("\nGenerating combined visualizations...")
     create_combined_graphs(agent_histories, output_dir)
     print(f"\nVisualization complete! Results saved in: {output_dir}")
+
 
 if __name__ == "__main__":
     main()
