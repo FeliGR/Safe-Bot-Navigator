@@ -19,9 +19,9 @@ class GridEnvironment:
     def __init__(
         self,
         size=10,
-        obstacle_prob=0.2,
-        trap_prob=0.3,
-        trap_danger=1,
+        obstacle_prob=0,
+        trap_prob=0.5,
+        trap_danger=0.6,
         rewards=None,
         grid=None,
     ):
@@ -40,7 +40,7 @@ class GridEnvironment:
         self.trap_prob = trap_prob
         self.trap_danger = trap_danger
 
-        default_rewards = {"target": 1, "step": 0, "collision": 0, "trap": 0}
+        default_rewards = {"target": 1, "step": -0.001, "collision": 0, "trap": 0}
         self.rewards = (
             default_rewards if rewards is None else {**default_rewards, **rewards}
         )

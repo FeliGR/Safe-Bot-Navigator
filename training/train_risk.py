@@ -11,7 +11,7 @@ env_config = {
     "obstacle_prob": 0.2,
     "trap_prob": 0.2,
     "trap_danger": 0.3,
-    "rewards": {"target": 1, "collision": 0, "step": -0.001, "trap": -0.2},
+    "rewards": {"target": 1, "collision": 0, "step": -0.001, "trap": 0},
 }
 
 # Configuración del entrenamiento
