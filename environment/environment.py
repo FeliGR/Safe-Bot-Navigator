@@ -325,7 +325,7 @@ class GridEnvironment:
         def get_cost(current, next_pos):
             base_cost = 1
             if allow_traps and self.grid[next_pos[0], next_pos[1]] == self.TRAP:
-                base_cost = 10
+                base_cost = 0
 
             if safety_distance > 0:
                 min_dist, hazard_count = get_min_distance_to_hazards(next_pos)

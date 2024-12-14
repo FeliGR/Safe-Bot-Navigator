@@ -2,9 +2,9 @@
 
 # Environment configuration
 env_config = {
-    "size": 8,
+    "size": 15,
     "obstacle_prob": 0.2,
-    "trap_prob": 0.1,
+    "trap_prob": 0.2,
     "trap_danger": 0.3,
     "rewards": {"target": 1, "collision": 0, "step": 0, "trap": 0},
 }
@@ -22,6 +22,7 @@ agent_config = {
     "interaction_type": "stochastic",
     "planner_probability": 0.2,
     "teacher_expertise": 1,
+    "teacher_safety": 2,
 }
 
 # Training configuration
@@ -29,6 +30,6 @@ train_config = {
     "episodes": 1000,
     "max_steps": 100,
     "render_freq": 1,
-    "render_mode": None,
+    "render_mode": "human",
     "render_delay": 0.2,
 }

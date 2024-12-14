@@ -254,13 +254,13 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             )
             if planned_actions is not None:
                 return planned_actions[0]
-
-        planned_actions = env.find_shortest_path(
-            allow_traps=True, safety_distance=random.randint(0, self.teacher_safety)
-        )
-        if planned_actions is None:
-            return self.get_random_action()
-        return planned_actions[0]
+        else:
+            planned_actions = env.find_shortest_path(
+                allow_traps=True, safety_distance=random.randint(0, self.teacher_safety)
+            )
+            if planned_actions is None:
+                return self.get_random_action()
+            return planned_actions[0]
 
     def get_action(self, state, env=None):
         """
