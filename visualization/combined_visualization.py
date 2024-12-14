@@ -47,24 +47,34 @@ def select_agents() -> List[str]:
             print("Invalid selection. Please enter valid numbers separated by spaces.")
 
 
-def load_agent_history(agent_name: str, base_dir: str = TRAINED_AGENTS_DIR):
-    """Load history data from agent's pickle file."""
+def load_agent_histories(agent_name: str, base_dir: str = TRAINED_AGENTS_DIR):
+    """Load both training and greedy histories from agent's pickle file."""
     agent_dir = os.path.join(base_dir, agent_name)
     agent_file = os.path.join(agent_dir, "agent.pkl")
 
     if os.path.exists(agent_file):
         agent = load_pickle(agent_file)
+        train_history = None
+        greedy_history = None
+        
+        # Get training history
         if hasattr(agent, "history"):
-            return agent.history
+            train_history = agent.history
         elif hasattr(agent, "train_history"):
-            return agent.train_history
-    return None
+            train_history = agent.train_history
+            
+        # Get greedy history
+        if hasattr(agent, "greedy_history"):
+            greedy_history = agent.greedy_history
+            
+        return train_history, greedy_history
+    return None, None
 
 
-def create_combined_graphs(agent_histories: Dict[str, dict], output_dir: str):
+def create_combined_graphs(agent_histories: Dict[str, dict], output_dir: str, history_type: str):
     """Create combined graphs for all metrics, both episode and cumulative."""
     if not agent_histories:
-        print("No agent histories to visualize.")
+        print(f"No agent {history_type} histories to visualize.")
         return
 
     # Create output directory
@@ -79,7 +89,7 @@ def create_combined_graphs(agent_histories: Dict[str, dict], output_dir: str):
         elif isinstance(history, dict):
             all_metrics.update(history.keys())
 
-    print(f"Available metrics: {', '.join(all_metrics)}")
+    print(f"Available metrics for {history_type}: {', '.join(all_metrics)}")
 
     # Create plots for each metric
     for metric in all_metrics:
@@ -103,7 +113,7 @@ def create_combined_graphs(agent_histories: Dict[str, dict], output_dir: str):
                 episodes = range(1, len(values) + 1)
                 plt.plot(episodes, values, label=agent_name, linewidth=2)
 
-        plt.title(f'Episode {metric.replace("_", " ").title()}')
+        plt.title(f'{history_type} - Episode {metric.replace("_", " ").title()}')
         plt.xlabel("Episode")
         plt.ylabel(metric.replace("_", " ").title())
         plt.grid(True, alpha=0.3)
@@ -135,7 +145,7 @@ def create_combined_graphs(agent_histories: Dict[str, dict], output_dir: str):
                 episodes = range(1, len(cumulative_values) + 1)
                 plt.plot(episodes, cumulative_values, label=agent_name, linewidth=2)
 
-        plt.title(f'Cumulative {metric.replace("_", " ").title()}')
+        plt.title(f'{history_type} - Cumulative {metric.replace("_", " ").title()}')
         plt.xlabel("Episode")
         plt.ylabel(f'Cumulative {metric.replace("_", " ").title()}')
         plt.grid(True, alpha=0.3)
@@ -155,25 +165,40 @@ def main():
     print(f"\nSelected agents: {', '.join(selected_agents)}")
 
     # Load histories for all selected agents
-    agent_histories = {}
+    train_histories = {}
+    greedy_histories = {}
+    
     for agent_name in selected_agents:
-        history = load_agent_history(agent_name)
-        if history:
-            agent_histories[agent_name] = history
-        else:
-            print(f"Warning: Could not load history for {agent_name}")
+        train_history, greedy_history = load_agent_histories(agent_name)
+        if train_history:
+            train_histories[agent_name] = train_history
+        if greedy_history:
+            greedy_histories[agent_name] = greedy_history
+        if not train_history and not greedy_history:
+            print(f"Warning: Could not load histories for {agent_name}")
 
-    if not agent_histories:
+    if not train_histories and not greedy_histories:
         print("No agent histories could be loaded. Exiting.")
         return
 
-    # Create output directory for combined visualizations
-    output_dir = os.path.join(SAFE_RESULTS_DIR, "combined_visualization")
+    # Create output directories for combined visualizations
+    train_output_dir = os.path.join(SAFE_RESULTS_DIR, "combined_visualization", "training")
+    greedy_output_dir = os.path.join(SAFE_RESULTS_DIR, "combined_visualization", "greedy")
 
     # Generate combined visualizations
     print("\nGenerating combined visualizations...")
-    create_combined_graphs(agent_histories, output_dir)
-    print(f"\nVisualization complete! Results saved in: {output_dir}")
+    
+    if train_histories:
+        print("\nGenerating training visualizations...")
+        create_combined_graphs(train_histories, train_output_dir, "Training")
+        print(f"Training visualizations saved in: {train_output_dir}")
+        
+    if greedy_histories:
+        print("\nGenerating greedy visualizations...")
+        create_combined_graphs(greedy_histories, greedy_output_dir, "Greedy")
+        print(f"Greedy visualizations saved in: {greedy_output_dir}")
+
+    print("\nVisualization complete!")
 
 
 if __name__ == "__main__":
