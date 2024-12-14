@@ -85,7 +85,7 @@ def train_agent(config):
     # Save the trained agent
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     save_dir = os.path.join(
-        os.path.dirname(PROJECT_ROOT),
+        PROJECT_ROOT,
         "trained_agents",
         f"{agent.__class__.__name__}_{timestamp}"
     )

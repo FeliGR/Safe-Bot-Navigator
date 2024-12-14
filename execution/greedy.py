@@ -8,7 +8,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def list_saved_agents(base_dir="trained_agents"):
+def list_saved_agents(base_dir=None):
     """
     List all saved agents and their configurations in the specified directory.
 
@@ -18,6 +18,11 @@ def list_saved_agents(base_dir="trained_agents"):
     Returns:
         list: A list of dictionaries containing agent information and summaries.
     """
+    if base_dir is None:
+        # Get the project root directory
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        base_dir = os.path.join(project_root, "trained_agents")
+
     if not os.path.exists(base_dir):
         print(f"No trained agents found in {base_dir}")
         return []
@@ -118,11 +123,8 @@ def load_agent(agent_info):
     Returns:
         object: The loaded agent instance.
     """
-
     agent_module = importlib.import_module(agent_info["agent_config"]["agent_module"])
-
     agent_class = getattr(agent_module, agent_info["agent_config"]["agent_class"])
-
     with open(os.path.join(agent_info["path"], "agent.pkl"), "rb") as f:
         agent = pickle.load(f)
     return agent
