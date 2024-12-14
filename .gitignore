@@ -21,6 +21,8 @@ wheels/
 *.egg
 *.pyc
 visualization/safe_results
+training/config
+training/saved_configs
 
 # Virtual Environment
 venv/

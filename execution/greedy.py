@@ -176,7 +176,7 @@ if __name__ == "__main__":
 
     selected_agent = select_agent()
     if selected_agent:
-        render_mode = None  # "human"
+        render_mode = "human"
         run_greedy_evaluation(
             selected_agent, episodes=50, render_delay=0.2, render_mode=render_mode
         )

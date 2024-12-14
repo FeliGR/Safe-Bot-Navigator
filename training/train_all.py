@@ -17,6 +17,7 @@ from environment.environment import GridEnvironment
 def list_configs():
     """List all available configuration files in the config directory."""
     config_dir = os.path.join(os.path.dirname(__file__), "config")
+    print(config_dir)
     config_files = []
 
     for file in os.listdir(config_dir):
@@ -84,7 +85,9 @@ def train_agent(config):
     # Save the trained agent
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     save_dir = os.path.join(
-        PROJECT_ROOT, "trained_agents", f"{agent.__class__.__name__}_{timestamp}"
+        os.path.dirname(PROJECT_ROOT),
+        "trained_agents",
+        f"{agent.__class__.__name__}_{timestamp}"
     )
     os.makedirs(save_dir, exist_ok=True)
 

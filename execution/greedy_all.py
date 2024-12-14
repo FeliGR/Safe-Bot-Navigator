@@ -57,8 +57,8 @@ def main():
     parser.add_argument(
         "--episodes",
         type=int,
-        default=50,
-        help="Number of episodes to run for each agent (default: 50)",
+        default=1000,
+        help="Number of episodes to run for each agent (default: 1000)",
     )
     parser.add_argument(
         "--render", action="store_true", help="Enable rendering (human mode)"
