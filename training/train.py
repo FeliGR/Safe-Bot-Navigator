@@ -82,12 +82,15 @@ def train_agent(config):
 
     history = agent.train(env, **config.train_config)
 
-    # Save the trained agent
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Save the trained agent using config name without _config suffix
+    config_name = os.path.basename(config.__file__)[:-3]  # Remove .py extension
+    if config_name.endswith("_config"):
+        config_name = config_name[:-7]  # Remove _config suffix
+        
     save_dir = os.path.join(
         PROJECT_ROOT,
         "trained_agents",
-        f"{agent.__class__.__name__}_{timestamp}"
+        config_name
     )
     os.makedirs(save_dir, exist_ok=True)
 

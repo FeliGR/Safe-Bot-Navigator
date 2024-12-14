@@ -11,18 +11,9 @@ def plot_cumulative_metric(metric_data, metric_name, save_path):
         return
 
     cumulative_data = np.cumsum(metric_data)
-    if len(metric_data) >= 10:  # Only calculate moving average if we have enough data
-        moving_avg = np.convolve(metric_data, np.ones(10) / 10, mode="valid")
 
     plt.figure(figsize=(10, 6))
     plt.plot(cumulative_data, label="Cumulative", linewidth=2)
-    if len(metric_data) >= 10:
-        plt.plot(
-            range(9, len(metric_data)),
-            moving_avg,
-            label="Moving Average (10)",
-            linestyle="--",
-        )
     plt.title(f"Cumulative {metric_name}")
     plt.xlabel("Episode")
     plt.ylabel(f"Cumulative {metric_name}")

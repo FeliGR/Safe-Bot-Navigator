@@ -108,6 +108,9 @@ class BasicQLearningAgent:
             "max_q": [],
             "steps": [],
             "episodes": list(range(episodes)),
+            "collisions": [],  # Track collisions per episode
+            "trap_steps": [],  # Track traps stepped over per episode
+            "trap_activations": [],  # Track traps activated per episode
         }
 
         for episode in range(episodes):
@@ -115,6 +118,9 @@ class BasicQLearningAgent:
             total_reward = 0
             steps = 0
             done = False
+            collisions = 0
+            trap_steps = 0
+            trap_activations = 0
 
             while not done and steps < max_steps:
                 if render_mode and episode % render_freq == 0:
@@ -122,9 +128,14 @@ class BasicQLearningAgent:
                     time.sleep(render_delay)
 
                 action = self.get_action(state)
-                next_state, reward, done, info = env.step(
-                    action
-                )  # Update to unpack 4 values
+                next_state, reward, done, info = env.step(action)
+
+                # Track events based on info dictionary
+                if info.get('collision', False):
+                    collisions += 1
+                trap_steps += info.get('trap_step', 0)
+                if info.get('trap_activation', False):
+                    trap_activations += 1
 
                 self.update(state, action, reward, next_state)
 
@@ -136,35 +147,37 @@ class BasicQLearningAgent:
             history["epsilon"].append(self.epsilon)
             history["max_q"].append(np.max(self.q_table))
             history["steps"].append(steps)
+            history["collisions"].append(collisions)
+            history["trap_steps"].append(trap_steps)
+            history["trap_activations"].append(trap_activations)
 
             if episode % 100 == 0:
                 print(
                     f"Episode {episode}/{episodes}, "
                     f"Reward: {total_reward:.2f}, "
-                    f"Epsilon: {self.epsilon:.2f}"
+                    f"Epsilon: {self.epsilon:.2f}, "
+                    f"Collisions: {collisions}, "
+                    f"Trap Steps: {trap_steps}, "
+                    f"Trap Activations: {trap_activations}"
                 )
 
             self.decay_epsilon()
 
+        self.train_history = history
         return history
 
     def run_greedy(
         self, env, episodes=1, max_steps=1000, render_mode="human", render_delay=0.1
     ):
-        """Evaluate the agent using a greedy policy over multiple episodes.
-
-        Args:
-            env: The environment for evaluation.
-            episodes (int, optional): Number of evaluation episodes.
-            max_steps (int, optional): Maximum steps per episode.
-            render_mode (str, optional): Mode to render ('human' or None).
-            render_delay (float, optional): Delay between renders in seconds.
-        """
+        """Evaluate the agent using a greedy policy over multiple episodes."""
         history = {
             "rewards": [],
             "steps": [],
             "success": [],
             "episodes": list(range(episodes)),
+            "collisions": [],  # Track collisions per episode
+            "trap_steps": [],  # Track traps stepped over per episode
+            "trap_activations": [],  # Track traps activated per episode
         }
 
         for episode in range(episodes):
@@ -172,18 +185,27 @@ class BasicQLearningAgent:
             total_reward = 0
             steps = 0
             done = False
+            collisions = 0
+            trap_steps = 0
+            trap_activations = 0
 
             while not done and steps < max_steps:
                 if render_mode:
                     env.render(mode=render_mode)
                     time.sleep(render_delay)
 
-                # action = np.argmax(self.q_table[state])
                 options = np.argwhere(
                     self.q_table[state] == np.max(self.q_table[state])
                 ).flatten()
                 action = np.random.choice(options)
                 next_state, reward, done, info = env.step(action)
+
+                # Track events based on info dictionary
+                if info.get('collision', False):
+                    collisions += 1
+                trap_steps += info.get('trap_step', 0)
+                if info.get('trap_activation', False):
+                    trap_activations += 1
 
                 state = next_state
                 total_reward += reward
@@ -196,19 +218,27 @@ class BasicQLearningAgent:
             history["rewards"].append(total_reward)
             history["steps"].append(steps)
             history["success"].append(done)
+            history["collisions"].append(collisions)
+            history["trap_steps"].append(trap_steps)
+            history["trap_activations"].append(trap_activations)
 
             if episode % 10 == 0:
                 success_rate = sum(history["success"][-10:]) / min(10, episode + 1)
                 print(
-                    f"Episode {episode}/{episodes}, Steps: {steps}, "
-                    f"Reward: {total_reward:.2f}, Success Rate: {success_rate:.2f}, "
-                    f"Epsilon: {self.epsilon:.2f}"
+                    f"Episode {episode}/{episodes}, "
+                    f"Steps: {steps}, "
+                    f"Reward: {total_reward:.2f}, "
+                    f"Success Rate: {success_rate:.2f}, "
+                    f"Collisions: {collisions}, "
+                    f"Trap Steps: {trap_steps}, "
+                    f"Trap Activations: {trap_activations}"
                 )
 
         if render_mode:
             env.close()
 
         self.greedy_history = history
+        return history
 
     def plot_history(self, history_type=BOTH_HISTORIES, save_path=None):
         """Plot the training and evaluation history of the agent.
