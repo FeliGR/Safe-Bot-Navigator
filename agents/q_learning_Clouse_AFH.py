@@ -127,6 +127,7 @@ class QLearningAgentTeacher(BasicQLearningAgent):
             episode_collisions = 0
             episode_trap_steps = 0
             episode_trap_activations = 0
+            done = False
 
             print(f"\nPlanified Episode {episode + 1}/{self.planified_episodes}")
 
